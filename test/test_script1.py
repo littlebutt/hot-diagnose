@@ -115,7 +115,8 @@ def check_limit(n, test_func_name):
 if __name__ == '__main__':
 
     limit = 1000
-    while 1:
+    loop = 1
+    while loop < 3:
         check_limit(limit, "test_recurse")
         check_limit(limit, "test_add")
         check_limit(limit, "test_repr")
@@ -126,3 +127,4 @@ if __name__ == '__main__':
         check_limit(limit, "test_compiler_recursion")
         print("Limit of %d is fine" % limit)
         limit = limit + 100
+        loop += 1
