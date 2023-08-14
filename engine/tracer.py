@@ -3,7 +3,7 @@ import sys
 from typing import Any, cast, Callable, Optional
 
 from engine.logs import Log
-from engine.typed import T_frame, T_event, T_tracefunc
+from typed import T_frame, T_event, T_tracefunc
 
 
 class Tracer:
@@ -13,7 +13,7 @@ class Tracer:
         self.callback = callback
 
     def mangle_path(self, path: str) -> str:
-        return os.path.join(self.current_path, path)
+        return os.path.abspath(path)
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
         Log.info(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}")

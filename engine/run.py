@@ -6,7 +6,7 @@ from types import ModuleType
 from engine.reader import read_source_py
 from engine.logs import Log
 from engine.tracer import Tracer
-from engine.typed import TRunner
+from typed import TRunner
 
 
 class DummyLoader:
@@ -41,15 +41,6 @@ class BaseRunner(TRunner):
         sys.argv = self.origin_argv
 
     def run(self, source: str, args: List[str]):
-        pass
-
-
-class ScriptRunner(BaseRunner):
-
-    def __init__(self, current_path: str, callback: Optional[Callable]):
-        super().__init__(current_path, callback)
-
-    def run(self, source: str, args: List[str]):
         source_byte = read_source_py(source)
         code: Optional[bytes] = None
         mod = self._build_module(source)
@@ -71,14 +62,8 @@ class ScriptRunner(BaseRunner):
             self._resume_args()
 
 
-class ModuleRunnrer(BaseRunner):
-
-    def run(self, source: str, args: List[str]):
-        pass
-
-
 class PyRunner:
-    __runner_class__: TRunner = ScriptRunner
+    __runner_class__: TRunner = BaseRunner
     source: Optional[str] = None
 
     def __init__(self,
@@ -104,10 +89,6 @@ class PyRunner:
                 if exists:
                     self.source = f
                     break
-        if target_is_dir:
-            self.__runner_class__ = ModuleRunnrer
-        else:
-            self.__runner_class__ = ScriptRunner
 
     def run(self):
         assert self.source is not None
