@@ -1,5 +1,5 @@
 import sys
-from cmd import Cmd
+from cmds import Cmd
 
 from engine.run import PyRunner
 from engine.tracer import Tracer
