@@ -1,24 +1,24 @@
 import os.path
 import sys
-from typing import Any, cast, Callable, Optional
+from typing import Any, cast, Callable, Optional, List
 
 from engine.logs import Log
-from typed import T_frame, T_event, T_tracefunc
+from typed import T_frame, T_event, T_tracefunc, T_tracer_callback_func
 
 
 class Tracer:
 
-    def __init__(self, current_path: str, callback: Optional[Callable]):
-        self.current_path = current_path
-        self.callback = callback
+    def __init__(self, callbacks: Optional[List[T_tracer_callback_func]]):
+        self.callbacks = callbacks
 
     def mangle_path(self, path: str) -> str:
         return os.path.abspath(path)
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
         Log.info(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}")
-        if self.callback is not None:
-            self.callback(frame, event, args)
+        if self.callbacks is not None:
+            for cb in self.callbacks:
+                cb(frame, event, args)
         return self._trace_func
 
     def start(self):

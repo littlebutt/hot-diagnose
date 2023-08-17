@@ -1,5 +1,6 @@
 import datetime
 import enum
+import sys
 import traceback
 from typing import ClassVar, Optional
 
@@ -28,7 +29,13 @@ class Log:
     @classmethod
     def _log(cls, message: str, color: LogColor) -> None:
         now = datetime.datetime.now()
+        stdout_origin = sys.stdout
+        stderr_origin = sys.stderr
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         print(f'\033[{color.value}m[{now.strftime("%Y-%m-%d %H:%M:%S")}]{message}\033[0m')
+        sys.stdout = stdout_origin
+        sys.stderr = stderr_origin
 
     @classmethod
     def warn(cls, message: str) -> None:

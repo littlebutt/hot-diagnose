@@ -6,7 +6,7 @@ from types import ModuleType
 from engine.reader import read_source_py
 from engine.logs import Log
 from engine.tracer import Tracer
-from typed import TRunner
+from typed import TRunner, T_tracer_callback_func
 
 
 class DummyLoader:
@@ -16,12 +16,11 @@ class DummyLoader:
 
 
 class BaseRunner(TRunner):
-    current_path: Optional[str] = None
-    tracer_callback: Optional[Callable] = None
 
-    def __init__(self, current_path: str, callback: Optional[Callable]):
-        self.current_path = current_path
-        self.tracer_callback = callback
+    tracer_callbacks: Optional[List[T_tracer_callback_func]] = None
+
+    def __init__(self, callbacks: Optional[List[T_tracer_callback_func]]):
+        self.tracer_callbacks = callbacks
 
     def _build_module(self, source: str) -> ModuleType:
         mod_ty = ModuleType('__main__')
@@ -50,7 +49,7 @@ class BaseRunner(TRunner):
         except Exception as e:
             Log.error(f"Fail to compile code: {source}", e)
             return
-        tracer = Tracer(self.current_path, self.tracer_callback)
+        tracer = Tracer(self.tracer_callbacks)
         tracer.start()
         try:
             exec(code, mod.__dict__)
@@ -69,12 +68,9 @@ class PyRunner:
     def __init__(self,
                  source: str,
                  args: List[str],
-                 current_path: str,
-                 tracer_callback: Optional[Callable],
-                 target_is_dir: bool):
+                 tracer_callbacks: Optional[List[T_tracer_callback_func]]):
         self.args = args
-        self.current_path = current_path
-        self.tracer_callback = tracer_callback
+        self.tracer_callbacks = tracer_callbacks
         if os.path.isabs(source):
             self.source = source
         else:
@@ -92,5 +88,5 @@ class PyRunner:
 
     def run(self):
         assert self.source is not None
-        runner = self.__runner_class__(self.current_path, self.tracer_callback)
+        runner = self.__runner_class__(self.tracer_callbacks)
         runner.run(self.source, self.args)
