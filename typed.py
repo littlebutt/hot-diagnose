@@ -1,8 +1,12 @@
 from io import TextIOWrapper
 from types import FrameType, ModuleType
-from typing import Literal, Callable, Any, Protocol, List, Optional, NewType, Tuple
+from typing import Literal, Callable, Any, Protocol, List, Optional, NewType, NamedTuple
 
-Pair = NewType('Paor', Tuple[Any, Any])
+
+class Pair(NamedTuple):
+    first: Any
+    second: Any
+
 
 T_event = Literal['call', 'line', 'return', 'exception', 'opcode']
 
@@ -41,9 +45,3 @@ class TPlugin(Protocol):
 
     def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
         pass
-
-
-T_out = NewType('T_stdout', TextIOWrapper)
-
-
-T_err = NewType('T_stderr', TextIOWrapper)

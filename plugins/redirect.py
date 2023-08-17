@@ -2,14 +2,15 @@ import sys
 from typing import Any, Optional
 
 from engine import Pipeline
-from typed import T_err, T_event, T_frame, T_out, TPlugin
+from typed import T_event, T_frame, TPlugin
 
 
 @Pipeline.add_plugin(False)
 class RedirectPlugin(TPlugin):
 
-    def set_out(self, io_out: T_out) -> None:
-        self.out = io_out
+    def set_out(self, out_path: str) -> None:
+        self.file_handler = open(out_path, 'w')
+        self.out = self.file_handler
 
     def pre_process_hook(self):
         assert sys.stdout == sys.__stdout__
@@ -20,6 +21,8 @@ class RedirectPlugin(TPlugin):
     def post_process_hook(self):
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
+        self.file_handler.close()
+
     
     def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
         pass
