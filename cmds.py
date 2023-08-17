@@ -1,5 +1,4 @@
 import getopt
-import os
 import sys
 
 from engine import Pipeline
@@ -30,9 +29,7 @@ class Cmd:
             assert redirect_plugin is not None
             redirect_plugin.set_out(output[0])
 
-
-
         source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
 
-        pipeline = Pipeline(source, args, None)
+        pipeline = Pipeline(source, args)
         pipeline.run()

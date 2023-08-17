@@ -1,4 +1,4 @@
-from typing import List, Optional, Callable, ClassVar, Type, Dict
+from typing import List, Optional, Callable, ClassVar, Dict
 
 from engine.logs import Log
 from engine.run import PyRunner
@@ -8,10 +8,9 @@ from typed import TPlugin, Pair
 class Pipeline:
     plugins: ClassVar[Dict[str, Pair[TPlugin, bool]]] = {}
 
-    def __init__(self, sources: List[str], args: List[str], tracer_callback: Optional[Callable]):
+    def __init__(self, sources: List[str], args: List[str]):
         self.sources = sources
         self.args = args
-        self.tracer_callback = tracer_callback
 
     @classmethod
     def pre_process_hook(cls):

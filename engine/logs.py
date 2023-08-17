@@ -23,7 +23,6 @@ class LogColor(enum.Enum):
 
 class Log:
 
-    # TODO: log_level set
     log_level: ClassVar[LogLevel] = LogLevel.INFO
 
     @classmethod

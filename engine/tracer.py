@@ -1,6 +1,6 @@
 import os.path
 import sys
-from typing import Any, cast, Callable, Optional, List
+from typing import Any, cast, Optional, List
 
 from engine.logs import Log
 from typed import T_frame, T_event, T_tracefunc, T_tracer_callback_func

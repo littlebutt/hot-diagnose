@@ -1,6 +1,6 @@
 import os.path
 import sys
-from typing import Any, Optional, List, Callable
+from typing import Any, Optional, List
 from types import ModuleType
 
 from engine.reader import read_source_py

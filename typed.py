@@ -1,4 +1,3 @@
-from io import TextIOWrapper
 from types import FrameType, ModuleType
 from typing import Literal, Callable, Any, Protocol, List, Optional, NewType, NamedTuple
 
