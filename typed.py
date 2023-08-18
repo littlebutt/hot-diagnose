@@ -18,7 +18,7 @@ T_tracefunc = Callable[[FrameType, str, Any], Callable[[FrameType, str, Any], An
 
 class TRunner(Protocol):
 
-    def run(self, source: str, args: List[str]):
+    def run(self):
         pass
 
     def _build_module(self, source: str) -> ModuleType:
