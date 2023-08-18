@@ -3,6 +3,7 @@ import sys
 
 from engine import Pipeline
 from plugins import RedirectPlugin
+from plugins import ScopePlugin
 
 
 class Cmd:
@@ -10,6 +11,8 @@ class Cmd:
     usage = '''
     -s --source: the source script file
     -o --output: redirect path for source file output
+    -p --path: specify a path that all files in the path should be included. 
+               It is necessary if the source is in a package
     -h --help: help message
     '''
 

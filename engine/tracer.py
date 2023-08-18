@@ -1,4 +1,5 @@
 import os.path
+import re
 import sys
 from typing import Any, cast, Optional, List
 
@@ -11,14 +12,19 @@ class Tracer:
     def __init__(self, callbacks: Optional[List[T_tracer_callback_func]]):
         self.callbacks = callbacks
 
-    def mangle_path(self, path: str) -> str:
+    @staticmethod
+    def mangle_path(path: str) -> str:
+        if re.match(r'^<.*>$', path) is not None:
+            return f'inner file {path}'
         return os.path.abspath(path)
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
-        Log.debug(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}")
+        cb_rt = []
         if self.callbacks is not None:
             for cb in self.callbacks:
-                cb(frame, event, args)
+                cb_rt.append(f'{cb.__name__}:{cb(frame, event, args) if cb(frame, event, args) is not None else ""}')
+        cb_rt = '|'.join(cb_rt)
+        Log.debug(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
         return self._trace_func
 
     def start(self):

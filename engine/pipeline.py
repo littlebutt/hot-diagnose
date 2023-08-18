@@ -1,4 +1,4 @@
-from typing import List, Optional, Callable, ClassVar, Dict
+from typing import List, Optional, ClassVar, Dict
 
 from engine.logs import Log
 from engine.run import PyRunner
@@ -16,12 +16,14 @@ class Pipeline:
     def pre_process_hook(cls):
         for key, (plugin, enabled) in cls.plugins.items():
             if enabled:
+                assert hasattr(plugin, 'pre_process_hook')
                 plugin.pre_process_hook()
 
     @classmethod
     def post_process_hook(cls):
         for key, (plugin, enabled) in cls.plugins.items():
             if enabled:
+                assert hasattr(plugin, 'post_process_hook')
                 plugin.post_process_hook()
 
     def run(self):
@@ -31,7 +33,9 @@ class Pipeline:
         if len(self.sources) > 1:
             raise NotImplementedError("Cannot support multiple sources")
         runner = PyRunner(source=self.sources[0], args=self.args,
-                          tracer_callbacks=[p[0].tracer_callback for _, p in Pipeline.plugins.items() if p[1]])
+                          tracer_callbacks=[p[0].tracer_callback
+                                            for _, p in Pipeline.plugins.items()
+                                            if p[1] and hasattr(p[0], 'tracer_callback')])
         runner.run()
         Pipeline.post_process_hook()
 
