@@ -23,7 +23,7 @@ class LogColor(enum.Enum):
 
 class Log:
 
-    log_level: ClassVar[LogLevel] = LogLevel.INFO
+    log_level: ClassVar[LogLevel] = LogLevel.DEBUG
 
     @classmethod
     def _log(cls, message: str, color: LogColor) -> None:
@@ -54,3 +54,9 @@ class Log:
             return
         cls._log(message + f" Caused by {e if e is not None else '' !r}", LogColor.RED)
         traceback.print_exc()
+
+    @classmethod
+    def debug(cls, message: str) -> None:
+        if cls.log_level.value < 4:
+            return
+        cls._log(message, LogColor.DEFAUT)

@@ -15,7 +15,7 @@ class Tracer:
         return os.path.abspath(path)
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
-        Log.info(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}")
+        Log.debug(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}")
         if self.callbacks is not None:
             for cb in self.callbacks:
                 cb(frame, event, args)
