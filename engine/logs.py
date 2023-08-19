@@ -49,7 +49,7 @@ class Log:
         cls._log(message, LogColor.DEFAUT)
 
     @classmethod
-    def error(cls, message: str, e: Optional[Exception]) -> None:
+    def error(cls, message: str, e: Optional[Exception] = None) -> None:
         if cls.log_level.value < 1:
             return
         cls._log(message + f" Caused by {e if e is not None else '' !r}", LogColor.RED)

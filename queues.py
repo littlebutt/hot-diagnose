@@ -1,15 +1,18 @@
 import queue
+from dataclasses import dataclass
 
 from typing import List
 
 
-class MessageEntry:
+__all__ = ['MessageEntry', 'MessageQueue']
 
-    def __init__(self, id: int, filename: str, lineno: int, cb_rts: str):
-        self.id = id
-        self.filename = filename
-        self.lineno = lineno
-        self.cb_rts = cb_rts
+
+@dataclass
+class MessageEntry:
+    id: int
+    filename: str
+    lineno: int
+    cb_rts: str
 
     def __repr__(self):
         return f"<MessageEntry id={self.id} filename={self.filename} lineno={self.lineno} cb_rts={self.cb_rts}>"

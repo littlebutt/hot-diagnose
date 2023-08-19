@@ -3,11 +3,14 @@ import sys
 from typing import Any, Optional, List
 from types import ModuleType
 
-from engine.reader import read_source_py
+from fileutils import read_source_py
 from engine.logs import Log
 from engine.tracer import Tracer
 from queues import MessageQueue
 from typed import TRunner, T_tracer_callback_func
+
+
+__all__ = ['PyRunner']
 
 
 class DummyLoader:
