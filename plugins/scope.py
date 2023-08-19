@@ -9,6 +9,8 @@ from typed import TPlugin, T_frame, T_event
 def self_dismiss(filename: str) -> bool:
     if filename.endswith(os.path.join(os.path.abspath(os.path.curdir).rstrip('plugins'), 'engine' + os.path.sep + 'tracer.py')):
         return False
+    if filename.startswith('inner file'):
+        return False
     return True
 
 

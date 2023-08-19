@@ -2,15 +2,17 @@ from typing import List, Optional, ClassVar, Dict
 
 from engine.logs import Log
 from engine.run import PyRunner
+from queues import MessageQueue
 from typed import TPlugin, Pair
 
 
 class Pipeline:
     plugins: ClassVar[Dict[str, Pair[TPlugin, bool]]] = {}
 
-    def __init__(self, sources: List[str], args: List[str]):
+    def __init__(self, sources: List[str], args: List[str], message_queue: MessageQueue):
         self.sources = sources
         self.args = args
+        self.message_queue = message_queue
 
     @classmethod
     def pre_process_hook(cls):
@@ -35,7 +37,8 @@ class Pipeline:
         runner = PyRunner(source=self.sources[0], args=self.args,
                           tracer_callbacks=[p[0].tracer_callback
                                             for _, p in Pipeline.plugins.items()
-                                            if p[1] and hasattr(p[0], 'tracer_callback')])
+                                            if p[1] and hasattr(p[0], 'tracer_callback')],
+                          message_queue=self.message_queue)
         runner.run()
         Pipeline.post_process_hook()
 

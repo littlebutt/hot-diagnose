@@ -44,3 +44,10 @@ class TPlugin(Protocol):
 
     def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
         pass
+
+
+class TMessageEntry(type):
+    id: int
+    filename: str
+    lineno: int
+    cb_rts: str

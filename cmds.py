@@ -5,6 +5,7 @@ import sys
 from engine import Pipeline
 from plugins import RedirectPlugin
 from plugins import ScopePlugin
+from queues import MessageQueue
 
 
 class Cmd:
@@ -52,5 +53,6 @@ class Cmd:
 
         source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
 
-        pipeline = Pipeline(source, args)
+        message_queue = MessageQueue()
+        pipeline = Pipeline(source, args, message_queue)
         pipeline.run()
