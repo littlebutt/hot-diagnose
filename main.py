@@ -5,6 +5,6 @@ from plugins.redirect import RedirectPlugin
 if __name__ == '__main__':
     cmd = Cmd()
     cmd.parse()
-    # 指定模块运行
     # 消息队列 <order filename lineno ctx>
+    # file system
     # server端消费者
