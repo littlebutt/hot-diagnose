@@ -31,13 +31,11 @@ class Line:
 @dataclass
 class File:
     filename: PathLike[str]
-    encoding: str = field(default_factory=str)
     extension: str | None = field(default_factory=str)
     content: List['Line'] = field(default_factory=list)
 
     def __repr__(self):
         return f'<File filename={os.fspath(self.filename)} ' \
-               f'encode={self.encoding} ' \
                f'extension={self.extension}>'
 
     def __str__(self):
