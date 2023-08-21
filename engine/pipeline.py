@@ -1,7 +1,10 @@
+import os.path
 from typing import List, Optional, ClassVar, Dict
 
 from engine.logs import Log
 from engine.run import PyRunner
+from fs.base import FS
+from fs.models import Path, Directory
 from queues import MessageQueue
 from typed import TPlugin, Pair
 
@@ -9,10 +12,25 @@ from typed import TPlugin, Pair
 class Pipeline:
     plugins: ClassVar[Dict[str, Pair[TPlugin, bool]]] = {}
 
-    def __init__(self, sources: List[str], args: List[str], message_queue: MessageQueue):
-        self.sources = sources
+    def __init__(self,
+                 sources: List[str],
+                 args: List[str],
+                 exclude_dir: Optional[List[str]] = None,
+                 exclude_file: Optional[List[str]] = None):
+        assert len(sources) > 0
+        if len(sources) > 1:
+            raise NotImplementedError("Cannot support multiple sources")
+        self.source = sources[0]
         self.args = args
-        self.message_queue = message_queue
+        self.exclude_dir = exclude_dir
+        self.exclude_file = exclude_file
+
+        self.message_queue = MessageQueue()
+        self.fs = FS(Path(self.source), exclude_dir=self.exclude_dir, exclude_file=self.exclude_file)
+        self.root_dir = Directory(dirname=os.path.abspath(self.source), content=[])
+
+    def _prepare(self):
+        self.fs.build(self.root_dir)
 
     @classmethod
     def pre_process_hook(cls):
@@ -29,12 +47,10 @@ class Pipeline:
                 plugin.post_process_hook()
 
     def run(self):
-
+        self._prepare()
         Pipeline.pre_process_hook()
 
-        if len(self.sources) > 1:
-            raise NotImplementedError("Cannot support multiple sources")
-        runner = PyRunner(source=self.sources[0], args=self.args,
+        runner = PyRunner(source=self.source, args=self.args,
                           tracer_callbacks=[p[0].tracer_callback
                                             for _, p in Pipeline.plugins.items()
                                             if p[1] and hasattr(p[0], 'tracer_callback')],

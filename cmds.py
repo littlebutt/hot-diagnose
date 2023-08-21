@@ -53,6 +53,5 @@ class Cmd:
 
         source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
 
-        message_queue = MessageQueue()
-        pipeline = Pipeline(source, args, message_queue)
+        pipeline = Pipeline(source, args)
         pipeline.run()

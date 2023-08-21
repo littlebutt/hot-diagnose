@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from os import PathLike
 from typing import List, Union, Any
 
-__all__ = ['Line', 'File', 'Directory']
+__all__ = ['Path', 'Line', 'File', 'Directory']
 
 
 @dataclass
