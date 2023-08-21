@@ -4,15 +4,15 @@ import sys
 from typing import Any, cast, Optional, List, Callable
 
 from engine.logs import Log
-from queues import MessageQueue, MessageEntry
+from queues import TraceMessageEntry, DualMessageQueue
 from typed import T_frame, T_event, T_tracefunc, T_tracer_callback_func
 
 
 class Tracer:
 
-    def __init__(self, callbacks: Optional[List[T_tracer_callback_func]], message_queue: MessageQueue):
+    def __init__(self, callbacks: Optional[List[T_tracer_callback_func]], dual_message_queue: DualMessageQueue):
         self.callbacks = callbacks
-        self.message_queue = message_queue
+        self.dmq = dual_message_queue
 
     @staticmethod
     def mangle_path(path: str) -> str:
@@ -31,7 +31,7 @@ class Tracer:
                 cb_rt.append(f'{self.manble_func_name(cb)}:{cb(frame, event, args) if cb(frame, event, args) is not None else ""}')
         cb_rt = '|'.join(cb_rt)
         Log.debug(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
-        self.message_queue.put(MessageEntry(0, self.mangle_path(frame.f_code.co_filename), frame.f_lineno, cb_rt))
+        self.dmq.put_request(TraceMessageEntry(0, self.mangle_path(frame.f_code.co_filename), frame.f_lineno, cb_rt))
         return self._trace_func
 
     def start(self):

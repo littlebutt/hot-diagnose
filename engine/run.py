@@ -6,7 +6,7 @@ from types import ModuleType
 from fileutils import read_source_py
 from engine.logs import Log
 from engine.tracer import Tracer
-from queues import MessageQueue
+from queues import DualMessageQueue
 from typed import TRunner, T_tracer_callback_func
 
 
@@ -27,10 +27,10 @@ class PyRunner(TRunner):
                  source: str,
                  args: List[str],
                  tracer_callbacks: Optional[List[T_tracer_callback_func]],
-                 message_queue: MessageQueue):
+                 dual_message_queue: DualMessageQueue):
         self.args = args
         self.tracer_callbacks = tracer_callbacks
-        self.message_queue = message_queue
+        self.dmq = dual_message_queue
         if os.path.isabs(source):
             self.source = source
         else:
@@ -73,7 +73,7 @@ class PyRunner(TRunner):
         except Exception as e:
             Log.error(f"Fail to compile code: {source}", e)
             return
-        tracer = Tracer(self.tracer_callbacks, self.message_queue)
+        tracer = Tracer(self.tracer_callbacks, self.dmq)
         tracer.start()
         try:
             exec(code, mod.__dict__)

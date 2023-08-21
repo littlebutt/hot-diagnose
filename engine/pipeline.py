@@ -5,7 +5,7 @@ from engine.logs import Log
 from engine.run import PyRunner
 from fs.base import FS
 from fs.models import Path, Directory
-from queues import MessageQueue
+from queues import DualMessageQueue
 from typed import TPlugin, Pair
 
 
@@ -15,6 +15,7 @@ class Pipeline:
     def __init__(self,
                  sources: List[str],
                  args: List[str],
+                 scope_path: str,
                  exclude_dir: Optional[List[str]] = None,
                  exclude_file: Optional[List[str]] = None):
         assert len(sources) > 0
@@ -25,8 +26,8 @@ class Pipeline:
         self.exclude_dir = exclude_dir
         self.exclude_file = exclude_file
 
-        self.message_queue = MessageQueue()
-        self.fs = FS(Path(self.source), exclude_dir=self.exclude_dir, exclude_file=self.exclude_file)
+        self.dmq = DualMessageQueue()
+        self.fs = FS(Path(scope_path), exclude_dir=self.exclude_dir, exclude_file=self.exclude_file)
         self.root_dir = Directory(dirname=os.path.abspath(self.source), content=[])
 
     def _prepare(self):
@@ -54,7 +55,7 @@ class Pipeline:
                           tracer_callbacks=[p[0].tracer_callback
                                             for _, p in Pipeline.plugins.items()
                                             if p[1] and hasattr(p[0], 'tracer_callback')],
-                          message_queue=self.message_queue)
+                          dual_message_queue=self.dmq)
         runner.run()
         Pipeline.post_process_hook()
 

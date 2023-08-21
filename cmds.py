@@ -3,6 +3,7 @@ import os.path
 import sys
 
 from engine import Pipeline
+from engine.logs import Log
 from plugins import RedirectPlugin
 from plugins import ScopePlugin
 from queues import MessageQueue
@@ -39,12 +40,13 @@ class Cmd:
             assert redirect_plugin is not None
             redirect_plugin.set_out(output[0])
 
+        scope_paths = None
         if any(opt in ['-p', '--path'] for opt, optarg in opts):
-            paths = [optarg for opt, optarg in opts if opt in ['-p', '--path']]
+            scope_paths = [optarg for opt, optarg in opts if opt in ['-p', '--path']]
             scope_plugin: ScopePlugin = Pipeline.get_plugin('ScopePlugin')
             assert scope_plugin is not None
             _funcs = []
-            for path in paths:
+            for path in scope_paths:
                 if not os.path.isabs(path):
                     path = os.path.abspath(path)
                 sys.path.append(path)
@@ -53,5 +55,10 @@ class Cmd:
 
         source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
 
-        pipeline = Pipeline(source, args)
+        scope_path = None
+        if scope_paths is not None:
+            if len(scope_paths) > 1:
+                Log.warn("Only support single scope path")
+            scope_path = scope_paths[0]
+        pipeline = Pipeline(source, args, scope_path)
         pipeline.run()
