@@ -2,6 +2,7 @@ import sys
 from typing import Any, Optional
 
 from engine import Pipeline
+from queues import MessageQueue
 from typed import T_event, T_frame, TPlugin
 
 
@@ -23,6 +24,5 @@ class RedirectPlugin(TPlugin):
         sys.stderr = sys.__stderr__
         self.file_handler.close()
 
-    
-    def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
+    def tracer_callback(self, frame: T_frame, event: T_event, args: Any, mq: 'MessageQueue') -> Optional[str]:
         pass

@@ -28,7 +28,7 @@ class Pipeline:
 
         self.dmq = DualMessageQueue()
         self.fs = FS(Path(scope_path), exclude_dir=self.exclude_dir, exclude_file=self.exclude_file)
-        self.root_dir = Directory(dirname=os.path.abspath(self.source), content=[])
+        self.root_dir = Directory(dirname=os.path.abspath(scope_path), content=[])
 
     def _prepare(self):
         self.fs.build(self.root_dir)

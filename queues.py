@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from typing import List, TypeVar, Any, Tuple
 
-__all__ = ['TraceMessageEntry', 'DualMessageQueue']
+__all__ = ['TraceMessageEntry', 'DualMessageQueue', 'MessageQueue']
 
 
 class MessageEntry:
@@ -40,6 +40,7 @@ class ActionMessageEntry(MessageEntry):
 
 
 T = TypeVar('T', bound=MessageEntry)
+
 
 class MessageQueue(queue.Queue):
 

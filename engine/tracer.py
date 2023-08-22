@@ -28,10 +28,11 @@ class Tracer:
         cb_rt = []
         if self.callbacks is not None:
             for cb in self.callbacks:
-                cb_rt.append(f'{self.manble_func_name(cb)}:{cb(frame, event, args) if cb(frame, event, args) is not None else ""}')
+                cb_rt.append(f'{self.manble_func_name(cb)}:'
+                             f'{cb(frame, event, args, self.dmq.get_request_queue()) if cb(frame, event, args, self.dmq.get_request_queue()) is not None else ""}')
         cb_rt = '|'.join(cb_rt)
         Log.debug(f"filename: {self.mangle_path(frame.f_code.co_filename)}, lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
-        self.dmq.put_request(TraceMessageEntry(0, self.mangle_path(frame.f_code.co_filename), frame.f_lineno, cb_rt))
+        self.dmq.put_response(TraceMessageEntry(0, self.mangle_path(frame.f_code.co_filename), frame.f_lineno, cb_rt))
         return self._trace_func
 
     def start(self):
