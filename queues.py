@@ -1,7 +1,7 @@
 import queue
 from dataclasses import dataclass, field
 
-from typing import List, TypeVar, Any, Tuple
+from typing import List, TypeVar, Any, Tuple, ClassVar
 
 __all__ = ['TraceMessageEntry', 'DualMessageQueue', 'MessageQueue']
 
@@ -75,39 +75,43 @@ class MessageQueue(queue.Queue):
 
     def enumerate(self):
         while self._get_id < self._self_id - 1:
-            self._self_id += 1
-            yield self.queue[self._self_id]
+            self._get_id += 1
+            yield self.queue[self._get_id]
 
 
 class DualMessageQueue:
-    request_queue: MessageQueue
-    response_queue: MessageQueue
+    request_queue: ClassVar[MessageQueue] = MessageQueue()
+    response_queue: ClassVar[MessageQueue] = MessageQueue()
 
-    def __init__(self):
-        self.request_queue = MessageQueue()
-        self.response_queue = MessageQueue()
+    @classmethod
+    def put_request(cls, message_entry: T):
+        cls.request_queue.put(message_entry)
 
-    def put_request(self, message_entry: T):
-        self.request_queue.put(message_entry)
+    @classmethod
+    def get_request(cls):
+        return cls.request_queue.get()
 
-    def get_request(self):
-        return self.request_queue.get()
+    @classmethod
+    def put_response(cls, message_entry: T):
+        cls.response_queue.put(message_entry)
 
-    def put_response(self, message_entry: T):
-        self.response_queue.put(message_entry)
+    @classmethod
+    def get_response(cls):
+        return cls.response_queue.get()
 
-    def get_response(self):
-        return self.response_queue.get()
+    @classmethod
+    def size(cls)-> Tuple[int, int]:
+        return cls.request_queue.qsize(), cls.response_queue.qsize()
 
-    def size(self)-> Tuple[int, int]:
-        return self.request_queue.qsize(), self.response_queue.qsize()
+    @classmethod
+    def reset(cls):
+        cls.request_queue.clear()
+        cls.response_queue.clear()
 
-    def reset(self):
-        self.request_queue.clear()
-        self.response_queue.clear()
+    @classmethod
+    def get_request_queue(cls):
+        return cls.request_queue
 
-    def get_request_queue(self):
-        return self.request_queue
-
-    def get_response_queue(self):
-        return self.response_queue
+    @classmethod
+    def get_response_queue(cls):
+        return cls.response_queue

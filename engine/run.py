@@ -26,11 +26,9 @@ class PyRunner(TRunner):
     def __init__(self,
                  source: str,
                  args: List[str],
-                 tracer_callbacks: Optional[List[T_tracer_callback_func]],
-                 dual_message_queue: DualMessageQueue):
+                 tracer_callbacks: Optional[List[T_tracer_callback_func]]):
         self.args = args
         self.tracer_callbacks = tracer_callbacks
-        self.dmq = dual_message_queue
         if os.path.isabs(source):
             self.source = source
         else:
@@ -73,7 +71,7 @@ class PyRunner(TRunner):
         except Exception as e:
             Log.error(f"Fail to compile code: {source}", e)
             return
-        tracer = Tracer(self.tracer_callbacks, self.dmq)
+        tracer = Tracer(self.tracer_callbacks)
         tracer.start()
         try:
             exec(code, mod.__dict__)

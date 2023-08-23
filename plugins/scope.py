@@ -36,7 +36,7 @@ class ScopePlugin(TPlugin):
     def post_process_hook(self, *args, **kwargs):
         pass
 
-    def tracer_callback(self, frame: T_frame, event: T_event, args: Any, mq: 'MessageQueue') -> Optional[str]:
+    def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
         for func in self.scope_funcs:
             if not func(self._mangle_path(frame.f_code.co_filename)):
                 return "False"
