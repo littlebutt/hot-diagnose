@@ -1,7 +1,7 @@
 import os
 import re
 from os import PathLike
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Generator, Any
 
 import fileutils
 from engine.logs import Log
@@ -9,6 +9,14 @@ from fs.models import Directory, File, Line
 
 
 class FS:
+    """
+    The file system used for cache traversed :obj:`File` or :obj:`Directory` in the given path
+
+    Args:
+        path: the given path to be traversed
+        exclude_dir: Optional[List], the excluded directory, wildcard strings support
+        exclude_file: Optional[List], the excluded file, wildcard strings support
+    """
 
     def __init__(self,
                  path: PathLike[str] | str,
@@ -55,11 +63,15 @@ class FS:
 
     def match(self, pattern: str, name: str) -> bool:
         """
-        method for wildcard path matching
+        Check the given ``name`` can be matched with the ``pattern``. If it can be matched, the :meth:`match` method will
+        return ``True`` , otherwise ``False``
 
-        :param pattern: matching pattern with `*` in it
-        :param name: matched path
-        :return: if it can be matched
+        Args:
+            pattern: matching pattern with ``*`` in it
+            name: matched path
+
+        Returns:
+            if it can be matched
         """
         res = "(?ms)" + self._translate(pattern) + r"\Z"
         re_pat = re.compile(res)
@@ -89,15 +101,19 @@ class FS:
 
     def build(self, root_dir: Directory):
         """
-        build the whole file system with inited path, eg:
+        Try to build the whole file system with inited ``path``, eg::
 
-        ```
-            fs = FS('..', exclude_dir=['.venv', '.git'])
+            fs = FS('..', exclude_dir=['.foo', '.bar'])
             root_dir = Directory(dirname='..', content=[])
             fs.build(root_dir)
-        ```
-        :param root_dir: the given directory
-        :return: None
+
+        The method must be called before :meth:`walk` and :meth:`find`
+
+        Args:
+            root_dir: the given directory
+
+        Returns:
+            None
         """
         assert root_dir is not None
         self.root = root_dir
@@ -126,7 +142,7 @@ class FS:
                     continue
 
     @staticmethod
-    def _walk(root_dir: Directory):
+    def _walk(root_dir: Directory) -> Generator[File, Any, Any]:
         stack = [
             root_dir
         ]
@@ -147,11 +163,20 @@ class FS:
 
     def find(self, path: PathLike) -> Directory | File | None:
         """
-        find the Directory or File with given path. If not exists, it will return None.
-        This method must be invoked after `build`
+        Try to find the :obj:`Directory` or :obj:`File` with given ``path``. If it exists, the method will return it,
+        otherwise ``None``
 
-        :param path: given path
-        :return: Directory, File or None
+        This method must be invoked after :meth:`build`
+
+        Args:
+            path: given path
+
+        Returns:
+            Directory | File | None: the object the method found
+
+        Raises:
+            RuntimeError: The object is neither :obj:`File` nor :obj:`Directory`
+            RuntimeError: The :class:`FS` was not built
         """
         if self.root is None:
             raise RuntimeError("FS must be built before walking")
@@ -177,20 +202,27 @@ class FS:
                 raise RuntimeError(f'Unknown File {_d!r}')
         return None
 
-    def walk(self, path: Optional[PathLike[str]] = None) -> File:
+    def walk(self, path: Optional[PathLike[str]] = None) -> Generator[File, Any, Any]:
         """
-        walk all files or directory in the fs. This method must be invoked after `build`.
+        Walk all :obj:`Directory` or :obj:`File` in the :class:`FS`.
 
-        ```
-            w = FS('..', exclude_dir=['.venv', '.git'])
+        This method must be invoked after :meth:`build`::
+
+            w = FS('..')
             root_dir = Directory(dirname='..', content=[])
             w.build(root_dir)
-            for _w in w.walk('path\to\file'):
+            for _w in w.walk('path\\to\\file'):
                 print(_w)
-        ```
 
-        :param path: Optional, the root directory for the walking if given.
-        :return: File
+        Args:
+            path: Optional, the root directory for the walking if given
+
+        Return:
+            File
+
+        Raises:
+            RuntimeError: The :class:`FS` was not built
+            RuntimeError: The given path is not found
         """
         if self.root is None:
             raise RuntimeError("FS must be built before walking")
@@ -201,8 +233,6 @@ class FS:
             if isinstance(res, File):
                 return res
             else:
-                for _res in self._walk(res):
-                    yield _res
+                yield from self._walk(res)
         else:
-            for _res in self._walk(self.root):
-                yield _res
+            yield from self._walk(self.root)
