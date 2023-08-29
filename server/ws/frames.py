@@ -4,7 +4,7 @@ import io
 import secrets
 import struct
 import sys
-from typing import Callable, Generator, Optional, Tuple
+from typing import Callable, Generator, Optional, Tuple, Any, Awaitable
 
 from server.ws.exception import WebsocketException
 from server.ws.typings import Data
@@ -188,6 +188,7 @@ class Frame:
         return f"{self.opcode.name} {data} [{metadata}]"
 
     @classmethod
+    @DeprecationWarning
     def parse(
         cls,
         read_exact: Callable[[int], Generator[None, None, bytes]],
@@ -325,6 +326,96 @@ class Frame:
                 raise WebsocketException("ProtocolError: control frame too long")
             if not self.fin:
                 raise WebsocketException("ProtocolError: fragmented control frame")
+
+    @classmethod
+    async def read(
+            cls,
+            reader: Callable[[int], Awaitable[bytes]],
+            *,
+            mask: bool,
+            max_size: Optional[int] = None
+    ) -> 'Frame':
+        """
+        Read a WebSocket frame.
+
+        Args:
+            reader: coroutine that reads exactly the requested number of
+                bytes, unless the end of file is reached.
+            mask: whether the frame should be masked i.e. whether the read
+                happens on the server side.
+            max_size: maximum payload size in bytes.
+            extensions: list of extensions, applied in reverse order.
+
+        Raises:
+            PayloadTooBig: if the frame exceeds ``max_size``.
+            ProtocolError: if the frame contains incorrect values.
+
+        """
+
+        # Read the header.
+        data = await reader(2)
+        head1, head2 = struct.unpack("!BB", data)
+
+        # While not Pythonic, this is marginally faster than calling bool().
+        fin = True if head1 & 0b10000000 else False
+        rsv1 = True if head1 & 0b01000000 else False
+        rsv2 = True if head1 & 0b00100000 else False
+        rsv3 = True if head1 & 0b00010000 else False
+
+        try:
+            opcode = Opcode(head1 & 0b00001111)
+        except ValueError as exc:
+            raise WebsocketException("ProtocolError: invalid opcode") from exc
+
+        if (True if head2 & 0b10000000 else False) != mask:
+            raise WebsocketException("ProtocolError: incorrect masking")
+
+        length = head2 & 0b01111111
+        if length == 126:
+            data = await reader(2)
+            (length,) = struct.unpack("!H", data)
+        elif length == 127:
+            data = await reader(8)
+            (length,) = struct.unpack("!Q", data)
+        if max_size is not None and length > max_size:
+            raise WebsocketException(f"PayloadTooBig: over size limit ({length} > {max_size} bytes)")
+        if mask:
+            mask_bits = await reader(4)
+
+        # Read the data.
+        data = await reader(length)
+        if mask:
+            data = apply_mask(data, mask_bits)
+
+        frame = Frame(opcode, data, fin, rsv1, rsv2, rsv3)
+        frame.check()
+
+        return frame
+
+    def write(
+            self,
+            write: Callable[[bytes], Any],
+            *,
+            mask: bool
+    ) -> None:
+        """
+        Write a WebSocket frame.
+
+        Args:
+            frame: frame to write.
+            write: function that writes bytes.
+            mask: whether the frame should be masked i.e. whether to write
+                happens on the client side.
+            extensions: list of extensions, applied in order.
+
+        Raises:
+            ProtocolError: if the frame contains incorrect values.
+
+        """
+        # The frame is written in a single call to write in order to prevent
+        # TCP fragmentation. See #68 for details. This also makes it safe to
+        # send frames concurrently from multiple coroutines.
+        write(self.serialize(mask=mask))
 
 
 def prepare_data(data: Data) -> Tuple[int, bytes]:
