@@ -1,4 +1,4 @@
-from typing import NewType, Tuple, Optional, Union
+from typing import NewType, Union
 
 
 Subprotocol = NewType("Subprotocol", str)

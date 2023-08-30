@@ -4,7 +4,7 @@ import io
 import secrets
 import struct
 import sys
-from typing import Callable, Generator, Optional, Tuple, Any, Awaitable
+from typing import Callable, Optional, Tuple, Any, Awaitable
 
 from server.ws.exception import WebsocketException
 from server.ws.typings import Data
@@ -186,76 +186,6 @@ class Frame:
         metadata = ", ".join(filter(None, [coding, length, non_final]))
 
         return f"{self.opcode.name} {data} [{metadata}]"
-
-    @classmethod
-    @DeprecationWarning
-    def parse(
-        cls,
-        read_exact: Callable[[int], Generator[None, None, bytes]],
-        *,
-        mask: bool,
-        max_size: Optional[int] = None,
-    ) -> Generator[None, None, 'Frame']:
-        """
-        Parse a WebSocket frame.
-
-        This is a generator-based coroutine.
-
-        Args:
-            read_exact: generator-based coroutine that reads the requested
-                bytes or raises an exception if there isn't enough data.
-            mask: whether the frame should be masked i.e. whether the read
-                happens on the server side.
-            max_size: maximum payload size in bytes.
-
-        Raises:
-            EOFError: if the connection is closed without a full WebSocket frame.
-            UnicodeDecodeError: if the frame contains invalid UTF-8.
-            PayloadTooBig: if the frame's payload size exceeds ``max_size``.
-            ProtocolError: if the frame contains incorrect values.
-            :type extensions: object
-
-        """
-        # Read the header.
-        data = yield from read_exact(2)
-        head1, head2 = struct.unpack("!BB", data)
-
-        # While not Pythonic, this is marginally faster than calling bool().
-        fin = True if head1 & 0b10000000 else False
-        rsv1 = True if head1 & 0b01000000 else False
-        rsv2 = True if head1 & 0b00100000 else False
-        rsv3 = True if head1 & 0b00010000 else False
-
-        try:
-            opcode = Opcode(head1 & 0b00001111)
-        except ValueError as exc:
-            raise WebsocketException("ProtocolError: invalid opcode") from exc
-
-        if (True if head2 & 0b10000000 else False) != mask:
-            raise WebsocketException("ProtocolError: incorrect masking")
-
-        length = head2 & 0b01111111
-        if length == 126:
-            data = yield from read_exact(2)
-            (length,) = struct.unpack("!H", data)
-        elif length == 127:
-            data = yield from read_exact(8)
-            (length,) = struct.unpack("!Q", data)
-        if max_size is not None and length > max_size:
-            raise WebsocketException(f"PayloadTooBig: over size limit ({length} > {max_size} bytes)")
-        if mask:
-            mask_bytes = yield from read_exact(4)
-
-        # Read the data.
-        data = yield from read_exact(length)
-        if mask:
-            data = apply_mask(data, mask_bytes)
-
-        frame = cls(opcode, data, fin, rsv1, rsv2, rsv3)
-
-        frame.check()
-
-        return frame
 
     def serialize(
         self,

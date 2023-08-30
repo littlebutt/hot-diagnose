@@ -2,7 +2,6 @@ import asyncio
 import functools
 import logging
 import socket
-import sys
 import warnings
 from http.client import HTTPResponse
 from types import TracebackType

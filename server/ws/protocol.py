@@ -1,6 +1,4 @@
 import asyncio
-import base64
-import binascii
 import codecs
 import collections
 import email
@@ -13,97 +11,12 @@ import random
 from typing import Callable, Awaitable, Any, Optional, cast, Tuple, List, Deque, Dict, AsyncIterator, AsyncIterable, \
     Iterable, Mapping, Union
 
-from server.ws.base import State, accept_key
+from server.ws.base import State, build_response, check_request
 from server.ws.exception import WebsocketException
 from server.ws.frames import Close, OP_CLOSE, Frame, Opcode, OK_CLOSE_CODES, OP_TEXT, OP_BINARY, OP_PING, OP_PONG, \
     OP_CONT, prepare_ctrl, prepare_data
 from server.ws.http11 import Headers, read_request
-from server.ws.parse import parse_connection, parse_upgrade
-from server.ws.typings import ConnectionOption, UpgradeProtocol, Data
-
-
-def check_request(headers: Headers) -> str:
-    """
-    Check a handshake request received from the client.
-
-    This function doesn't verify that the request is an HTTP/1.1 or higher GET
-    request and doesn't perform ``Host`` and ``Origin`` checks. These controls
-    are usually performed earlier in the HTTP request handling code. They're
-    the responsibility of the caller.
-
-    Args:
-        headers: handshake request headers.
-
-    Returns:
-        str: ``key`` that must be passed to :func:`build_response`.
-
-    Raises:
-        InvalidHandshake: if the handshake request is invalid;
-            then the server must return 400 Bad Request error.
-
-    """
-    connection: List[ConnectionOption] = sum(
-        [parse_connection(value) for value in headers.get_all("Connection")], []
-    )
-
-    if not any(value.lower() == "upgrade" for value in connection):
-        raise WebsocketException(f"InvalidUpgrade: Connection {','.join(connection)}")
-
-    upgrade: List[UpgradeProtocol] = sum(
-        [parse_upgrade(value) for value in headers.get_all("Upgrade")], []
-    )
-
-    # For compatibility with non-strict implementations, ignore case when
-    # checking the Upgrade header. The RFC always uses "websocket", except
-    # in section 11.2. (IANA registration) where it uses "WebSocket".
-    if not (len(upgrade) == 1 and upgrade[0].lower() == "websocket"):
-        raise WebsocketException(f"InvalidUpgrade: Upgrade {','.join(upgrade)}")
-
-    try:
-        s_w_key = headers["Sec-WebSocket-Key"]
-    except KeyError as exc:
-        raise WebsocketException("InvalidHeader: Sec-WebSocket-Key") from exc
-    except Exception as exc:
-        raise WebsocketException(
-            "InvalidHeader: Sec-WebSocket-Key more than one Sec-WebSocket-Key header found"
-        ) from exc
-
-    try:
-        raw_key = base64.b64decode(s_w_key.encode(), validate=True)
-    except binascii.Error as exc:
-        raise WebsocketException(f"InvalidHeaderValue: Sec-WebSocket-Key {s_w_key}") from exc
-    if len(raw_key) != 16:
-        raise WebsocketException(f"InvalidHeaderValue: Sec-WebSocket-Key {s_w_key}")
-
-    try:
-        s_w_version = headers["Sec-WebSocket-Version"]
-    except KeyError as exc:
-        raise WebsocketException("InvalidHeader: Sec-WebSocket-Version") from exc
-    except Exception as exc:
-        raise WebsocketException(
-            "InvalidHeader: Sec-WebSocket-Version more than one Sec-WebSocket-Version header found"
-        ) from exc
-
-    if s_w_version != "13":
-        raise WebsocketException(f"InvalidHeaderValue: Sec-WebSocket-Version {s_w_version}")
-
-    return s_w_key
-
-
-def build_response(headers: Headers, key: str) -> None:
-    """
-    Build a handshake response to send to the client.
-
-    Update response headers passed in argument.
-
-    Args:
-        headers: handshake response headers.
-        key: returned by :func:`check_request`.
-
-    """
-    headers["Upgrade"] = "websocket"
-    headers["Connection"] = "Upgrade"
-    headers["Sec-WebSocket-Accept"] = accept_key(key)
+from server.ws.typings import Data
 
 
 class WebSocketServerProtocol(asyncio.Protocol):
