@@ -11,7 +11,7 @@ import random
 from typing import Callable, Awaitable, Any, Optional, cast, Tuple, List, Deque, Dict, AsyncIterator, AsyncIterable, \
     Iterable, Mapping, Union
 
-from server.ws.base import State, build_response, check_request
+from server.ws.misc import State, build_response, check_request
 from server.ws.exception import WebsocketException
 from server.ws.frames import Close, OP_CLOSE, Frame, Opcode, OK_CLOSE_CODES, OP_TEXT, OP_BINARY, OP_PING, OP_PONG, \
     OP_CONT, prepare_ctrl, prepare_data

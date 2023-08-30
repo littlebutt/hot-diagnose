@@ -5,7 +5,7 @@ from typing import Any, cast, Optional, List, Callable
 
 from engine.logs import Log
 from queues import TraceMessageEntry, DualMessageQueue
-from typed import T_frame, T_event, T_tracefunc, T_tracer_callback_func
+from typings import T_frame, T_event, T_tracefunc, T_tracer_callback_func
 
 
 class Tracer:

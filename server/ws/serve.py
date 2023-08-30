@@ -7,7 +7,7 @@ from http.client import HTTPResponse
 from types import TracebackType
 from typing import Optional, Set, Iterable, Type, Union, Callable, Awaitable, Any, Sequence, Generator
 
-from server.ws.base import State
+from server.ws.misc import State
 from server.ws.http11 import Headers
 from server.ws.protocol import WebSocketServerProtocol
 

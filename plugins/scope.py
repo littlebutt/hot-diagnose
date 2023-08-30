@@ -4,7 +4,7 @@ from typing import Any, Optional, Callable, List
 
 from engine import Pipeline
 from queues import MessageQueue
-from typed import TPlugin, T_frame, T_event
+from typings import TPlugin, T_frame, T_event
 
 
 def self_dismiss(filename: str) -> bool:

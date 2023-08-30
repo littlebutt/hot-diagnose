@@ -7,7 +7,7 @@ from fileutils import read_source_py
 from engine.logs import Log
 from engine.tracer import Tracer
 from queues import DualMessageQueue
-from typed import TRunner, T_tracer_callback_func
+from typings import TRunner, T_tracer_callback_func
 
 
 __all__ = ['PyRunner']

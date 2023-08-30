@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 from engine import Pipeline
 from queues import MessageQueue
-from typed import T_event, T_frame, TPlugin
+from typings import T_event, T_frame, TPlugin
 
 
 @Pipeline.add_plugin(False)

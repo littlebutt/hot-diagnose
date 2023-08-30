@@ -5,7 +5,7 @@ from engine.logs import Log
 from engine.run import PyRunner
 from fs.base import FS
 from fs.models import Path, Directory
-from typed import TPlugin, Pair
+from typings import TPlugin, Pair
 from queues import DualMessageQueue
 
 
