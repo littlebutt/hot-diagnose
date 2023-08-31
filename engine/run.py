@@ -6,7 +6,6 @@ from types import ModuleType
 from fileutils import read_source_py
 from engine.logs import Log
 from engine.tracer import Tracer
-from queues import DualMessageQueue
 from typings import TRunner, T_tracer_callback_func
 
 
@@ -14,12 +13,33 @@ __all__ = ['PyRunner']
 
 
 class DummyLoader:
+    """
+    The loader for the dummy module
+    """
 
     def __init__(self, fullname: str, *args: Any) -> None:
         self.fullname = fullname
 
 
 class PyRunner(TRunner):
+    """
+    The :class:`PyRunner` is for running Python script or package from the cammand line.
+
+    The idea of the class is first compiling the given source files and then executing the :obj:`code` with the args
+    from the command line. When executing the :obj:`code`, a trace is set to collect the runtime information. The
+    collected information  will be sent to the :class:`Q` for further using.
+
+    Attributes:
+
+        tracer_callbacks: The callback functions invoked in the trace. Mostly, it will consume the
+        :class:`ActionMessageEntry` and produce the :class:`TraceMessageEntry` in the :class:`Q`
+
+        source: The path to the executed file. To ensure the source is runnable, the ``PYTHONPATH`` must be set before
+        running.
+
+        args: The args used for the executed file.
+
+    """
     tracer_callbacks: Optional[List[T_tracer_callback_func]] = None
     source: Optional[str] = None
 

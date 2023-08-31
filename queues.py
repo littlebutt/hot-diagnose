@@ -3,11 +3,10 @@ from dataclasses import dataclass, field
 
 from typing import List, TypeVar, Any, Tuple, ClassVar
 
-__all__ = ['TraceMessageEntry', 'DualMessageQueue', 'MessageQueue']
+__all__ = ['TraceMessageEntry', 'ActionMessageEntry', 'Q']
 
 
 class MessageEntry:
-
     type: str
 
     def __str__(self):
@@ -43,7 +42,6 @@ T = TypeVar('T', bound=MessageEntry)
 
 
 class MessageQueue(queue.Queue):
-
     _self_id: int = 0
     _get_id: int = -1
 
@@ -100,7 +98,7 @@ class DualMessageQueue:
         return cls.response_queue.get()
 
     @classmethod
-    def size(cls)-> Tuple[int, int]:
+    def size(cls) -> Tuple[int, int]:
         return cls.request_queue.qsize(), cls.response_queue.qsize()
 
     @classmethod
@@ -115,3 +113,6 @@ class DualMessageQueue:
     @classmethod
     def get_response_queue(cls):
         return cls.response_queue
+
+
+Q = DualMessageQueue
