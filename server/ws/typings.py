@@ -1,6 +1,5 @@
 import asyncio
-import logging
-from typing import Iterable, Mapping, MutableMapping, NewType, Tuple, TypeVar, Union
+from typing import Iterable, Mapping, MutableMapping, NewType, Tuple, Union
 
 
 ConnectionOption = NewType("ConnectionOption", str)
@@ -19,8 +18,7 @@ HeadersLike = Union[
 Data = Union[str, bytes]
 
 
-LoggerLike = TypeVar('LoggerLike', bound=logging.Logger)
-
 ServerLike = NewType('ServerLike', asyncio.Server)
+
 
 BytesLike = bytes, bytearray, memoryview

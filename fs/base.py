@@ -4,18 +4,20 @@ from os import PathLike
 from typing import List, Tuple, Optional, Generator, Any
 
 import fileutils
-from engine.logs import Log
+from logs import Logger
 from fs.models import Directory, File, Line
 
 
 class FS:
     """
-    The file system used for cache traversed :obj:`File` or :obj:`Directory` in the given path
+    The file system used for cache traversed :obj:`File` or :obj:`Directory` in
+    the given path
 
     Args:
         path: the given path to be traversed
-        exclude_dir: Optional[List], the excluded directory, wildcard strings support
-        exclude_file: Optional[List], the excluded file, wildcard strings support
+        exclude_dir: Optional[List], the excluded directory, wildcard strings
+        support exclude_file: Optional[List], the excluded file, wildcard
+        strings.
     """
 
     def __init__(self,
@@ -63,8 +65,9 @@ class FS:
 
     def match(self, pattern: str, name: str) -> bool:
         """
-        Check the given ``name`` can be matched with the ``pattern``. If it can be matched, the :meth:`match` method will
-        return ``True`` , otherwise ``False``
+        Check the given ``name`` can be matched with the ``pattern``. If it can
+        be matched, the :meth:`match` method will return :obj:`True` , otherwise
+        :obj:`False`
 
         Args:
             pattern: matching pattern with ``*`` in it
@@ -83,8 +86,8 @@ class FS:
         try:
             for info in os.listdir(path):
                 yield path, info
-        except Exception as e:
-            Log.error(f'Fail to walk path {path}', e)
+        except Exception:
+            Logger.get_logger('fs').error(f'Fail to walk path {path}', exc_info=True)
             return None
 
     @staticmethod
@@ -116,6 +119,10 @@ class FS:
             None
         """
         assert root_dir is not None
+        if os.path.isfile(root_dir.dirname):
+            f = File(filename=root_dir.dirname)
+            f.extension, f.content = self._inspect_file(root_dir.dirname)
+            return f
         self.root = root_dir
         stack = [
             (self.path, root_dir)
@@ -126,14 +133,17 @@ class FS:
                 _short_d = _d
                 _d = os.path.join(_p, _d)
                 if os.path.isdir(_d):
-                    if any([self.match(pattern, _d) or self.match(pattern, _short_d) for pattern in self.exclude_dir]):
+                    if any([self.match(pattern, _d)
+                            or self.match(pattern, _short_d)
+                            for pattern in self.exclude_dir]):
                         continue
                     _new_dir = Directory(dirname=_d, content=[])
                     _dir.content.append(_new_dir)
                     stack.append((_d, _new_dir))
                 elif os.path.isfile(_d):
-                    if any(([self.match(pattern, _d) or self.match(pattern, _short_d) for pattern in
-                             self.exclude_file])):
+                    if any(([self.match(pattern, _d)
+                             or self.match(pattern, _short_d)
+                             for pattern in self.exclude_file])):
                         continue
                     _new_file = File(filename=_d)
                     _new_file.extension, _new_file.content = self._inspect_file(_d)
@@ -163,8 +173,8 @@ class FS:
 
     def find(self, path: PathLike) -> Directory | File | None:
         """
-        Try to find the :obj:`Directory` or :obj:`File` with given ``path``. If it exists, the method will return it,
-        otherwise ``None``
+        Try to find the :class:`Directory` or :class:`File` with given ``path``.
+        If it exists, the method will return it, otherwise :obj:`None`
 
         This method must be invoked after :meth:`build`
 
@@ -175,8 +185,8 @@ class FS:
             Directory | File | None: the object the method found
 
         Raises:
-            RuntimeError: The object is neither :obj:`File` nor :obj:`Directory`
-            RuntimeError: The :class:`FS` was not built
+            RuntimeError: The object is neither :class:`File` nor
+            :class:`Directory` RuntimeError: The :class:`FS` was not built
         """
         if self.root is None:
             raise RuntimeError("FS must be built before walking")
@@ -204,7 +214,7 @@ class FS:
 
     def walk(self, path: Optional[PathLike[str]] = None) -> Generator[File, Any, Any]:
         """
-        Walk all :obj:`Directory` or :obj:`File` in the :class:`FS`.
+        Walk all :class:`Directory` or :class:`File` in the :class:`FS`.
 
         This method must be invoked after :meth:`build`::
 

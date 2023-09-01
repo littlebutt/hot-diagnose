@@ -1,28 +1,23 @@
-import sys
 from typing import Any, Optional
 
 from engine import Pipeline
-from queues import MessageQueue
+from logs import Logger
 from typings import T_event, T_frame, TPlugin
 
 
 @Pipeline.add_plugin(False)
 class RedirectPlugin(TPlugin):
 
-    def set_out(self, out_path: str) -> None:
-        self.file_handler = open(out_path, 'w')
-        self.out = self.file_handler
+    def set_out(self, filename: str) -> None:
+        self.filename = filename
 
-    def pre_process_hook(self):
-        assert sys.stdout == sys.__stdout__
-        assert sys.stderr == sys.__stderr__
-        sys.stdout = self.out
-        sys.stderr = self.out
+    def on_preprocess(self):
+        Logger.redirect_to_file(self.filename,
+                                logger=Logger.get_logger('engine'))
 
-    def post_process_hook(self):
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
-        self.file_handler.close()
+    def on_postprocess(self):
+        pass
 
-    def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
+    def tracer_callback(self, frame: T_frame, event: T_event, args: Any) \
+            -> Optional[str]:
         pass

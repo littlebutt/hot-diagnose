@@ -34,10 +34,12 @@ from server.ws.exception import WebsocketException
 from server.ws.typings import HeadersLike
 
 # Maximum total size of headers is around 128 * 8 KiB = 1 MiB.
+
 MAX_HEADERS = 128
 
 # Limit request line and header lines. 8KiB is the most common default
 # configuration of popular HTTP servers.
+
 MAX_LINE = 8192
 
 

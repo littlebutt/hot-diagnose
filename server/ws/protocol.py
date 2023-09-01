@@ -25,7 +25,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-
 import asyncio
 import codecs
 import collections
@@ -44,7 +43,8 @@ from server.ws.exception import WebsocketException
 from server.ws.frames import Close, OP_CLOSE, Frame, Opcode, OK_CLOSE_CODES, OP_TEXT, OP_BINARY, OP_PING, OP_PONG, \
     OP_CONT, prepare_ctrl, prepare_data
 from server.ws.http11 import Headers, read_request
-from server.ws.typings import Data, LoggerLike, ServerLike
+from server.ws.typings import Data, ServerLike
+from typings import LoggerLike
 
 
 class WebSocketServerProtocol(asyncio.Protocol):
@@ -69,20 +69,20 @@ class WebSocketServerProtocol(asyncio.Protocol):
     """
 
     def __init__(
-        self,
-        ws_handler: Callable[['WebSocketServerProtocol'], Awaitable[Any]],
-        ws_server: ServerLike,
-        *,
-        read_limit: int = 2 ** 16,
-        write_limit: int = 2 ** 16,
-        max_size: Optional[int] = 2 ** 20,
-        max_queue: Optional[int] = 2 ** 5,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        close_timeout = 10,
-        logger: Optional[LoggerLike] = None,
-        ping_interval: Optional[float] = 20,
-        ping_timeout: Optional[float] = 20,
-        **kwargs: Any,
+            self,
+            ws_handler: Callable[['WebSocketServerProtocol'], Awaitable[Any]],
+            ws_server: ServerLike,
+            *,
+            read_limit: int = 2 ** 16,
+            write_limit: int = 2 ** 16,
+            max_size: Optional[int] = 2 ** 20,
+            max_queue: Optional[int] = 2 ** 5,
+            loop: Optional[asyncio.AbstractEventLoop] = None,
+            close_timeout=10,
+            logger: Optional['LoggerLike'] = None,
+            ping_interval: Optional[float] = 20,
+            ping_timeout: Optional[float] = 20,
+            **kwargs: Any,
     ) -> None:
         if logger is None:
             logger = logging.getLogger("websockets.server")
@@ -362,9 +362,11 @@ class WebSocketServerProtocol(asyncio.Protocol):
                 and self.close_sent is not None
                 and self.close_sent.code in OK_CLOSE_CODES
         ):
-            exc = WebsocketException(f"ConnectionClosedOK: {self.close_rcvd} {self.close_sent} {self.close_rcvd_then_sent}")
+            exc = WebsocketException(
+                f"ConnectionClosedOK: {self.close_rcvd} {self.close_sent} {self.close_rcvd_then_sent}")
         else:
-            exc = WebsocketException(f"ConnectionClosedError: {self.close_rcvd} {self.close_sent} {self.close_rcvd_then_sent}")
+            exc = WebsocketException(
+                f"ConnectionClosedError: {self.close_rcvd} {self.close_sent} {self.close_rcvd_then_sent}")
         # Chain to the exception that terminated data transfer, if any.
         exc.__cause__ = self.transfer_data_exc
         return exc
@@ -632,7 +634,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
         return path, headers
 
     def write_http_response(
-        self, status: http.HTTPStatus, headers: Headers, body: Optional[bytes] = None
+            self, status: http.HTTPStatus, headers: Headers, body: Optional[bytes] = None
     ) -> None:
         """
         Write status line and headers to the HTTP response.
@@ -805,7 +807,6 @@ class WebSocketServerProtocol(asyncio.Protocol):
                     pong_timestamp = time.perf_counter()
                     # Sending a pong for only the most recent ping is legal.
                     # Acknowledge all previous pings too in that case.
-                    ping_id = None
                     ping_ids = []
                     for ping_id, (pong_waiter, ping_timestamp) in self.pings.items():
                         ping_ids.append(ping_id)
@@ -1040,7 +1041,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
         self.close_connection_task = self.loop.create_task(self.close_connection())
 
     async def handshake(
-        self
+            self
     ) -> str:
         """
         Perform the server side of the opening handshake.
@@ -1197,7 +1198,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
             # completed before receiving a new message, raise a suitable
             # exception (or return None if legacy_recv is enabled).
             if not pop_message_waiter.done():
-                    await self.ensure_open()
+                await self.ensure_open()
 
         # Pop a message from the queue.
         message = self.messages.popleft()

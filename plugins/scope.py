@@ -3,7 +3,6 @@ import re
 from typing import Any, Optional, Callable, List
 
 from engine import Pipeline
-from queues import MessageQueue
 from typings import TPlugin, T_frame, T_event
 
 
@@ -30,10 +29,10 @@ class ScopePlugin(TPlugin):
             return f'inner file {path}'
         return os.path.abspath(path)
 
-    def pre_process_hook(self, *args, **kwargs):
+    def on_preprocess(self, *args, **kwargs):
         pass
 
-    def post_process_hook(self, *args, **kwargs):
+    def on_postprocess(self, *args, **kwargs):
         pass
 
     def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:

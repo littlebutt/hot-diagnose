@@ -1,14 +1,14 @@
 import asyncio
 import functools
-import logging
 import socket
-import http.client # must be imported
+import http.client  # must be imported
 from types import TracebackType
 from typing import Optional, Set, Iterable, Type, Union, Callable, Awaitable, Any, Sequence, Generator
 
+from logs import Logger
 from server.ws.misc import State
 from server.ws.protocol import WebSocketServerProtocol
-from server.ws.typings import LoggerLike
+from typings import LoggerLike
 
 
 class WebSocketServer:
@@ -30,7 +30,7 @@ class WebSocketServer:
 
     def __init__(self, logger: Optional['LoggerLike'] = None):
         if logger is None:
-            logger = logging.getLogger("websockets.server")
+            logger = Logger.get_logger("websockets.server")
         self.logger = logger
 
         # Keep track of active connections.
@@ -227,10 +227,10 @@ class WebSocketServer:
         return self  # pragma: no cover
 
     async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
     ) -> None:
         self.close()
         await self.wait_closed()
@@ -283,20 +283,19 @@ class Serve:
     """
 
     def __init__(
-        self,
-        ws_handler: Callable[['WebSocketServerProtocol'], Awaitable[Any]],
-        host: Optional[Union[str, Sequence[str]]] = None,
-        port: Optional[int] = None,
-        *,
-        logger: Optional['LoggerLike'] = logging.getLogger("websockets.server"),
-        ping_interval: Optional[float] = 20,
-        ping_timeout: Optional[float] = 20,
-        close_timeout: Optional[float] = None,
-        max_size: Optional[int] = 2**20,
-        max_queue: Optional[int] = 2**5,
-        read_limit: int = 2**16,
-        write_limit: int = 2**16,
-        **kwargs: Any,
+            self,
+            ws_handler: Callable[['WebSocketServerProtocol'], Awaitable[Any]],
+            host: Optional[Union[str, Sequence[str]]] = None,
+            port: Optional[int] = None,
+            *,
+            logger: Optional['LoggerLike'] = Logger.get_logger("websockets.server"),
+            ping_interval: Optional[float] = 20,
+            ping_timeout: Optional[float] = 20,
+            max_size: Optional[int] = 2 ** 20,
+            max_queue: Optional[int] = 2 ** 5,
+            read_limit: int = 2 ** 16,
+            write_limit: int = 2 ** 16,
+            **kwargs: Any,
     ) -> None:
         close_timeout = 10
 
@@ -342,10 +341,10 @@ class Serve:
         return await self
 
     async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
     ) -> None:
         self.ws_server.close()
         await self.ws_server.wait_closed()
@@ -370,8 +369,10 @@ if __name__ == '__main__':
         async for message in ws:
             await ws.send(message)
 
+
     async def main():
         async with serve(echo, "localhost", 8765):
             await asyncio.Future()
+
 
     asyncio.run(main())

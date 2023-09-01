@@ -1,5 +1,6 @@
+import logging
 from types import FrameType, ModuleType
-from typing import Literal, Callable, Any, Protocol, List, Optional, NewType, NamedTuple
+from typing import Literal, Callable, Any, Protocol, Optional, NamedTuple, TypeVar
 
 
 class Pair(NamedTuple):
@@ -36,10 +37,10 @@ T_tracer_callback_func = Callable[[T_frame, T_event, Any], str]
 
 class TPlugin(Protocol):
 
-    def pre_process_hook(self, *args, **kwargs):
+    def on_preprocess(self, *args, **kwargs):
         pass
 
-    def post_process_hook(self, *args, **kwargs):
+    def on_postprocess(self, *args, **kwargs):
         pass
 
     def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
@@ -51,3 +52,6 @@ class TMessageEntry(type):
     filename: str
     lineno: int
     cb_rts: str
+
+
+LoggerLike = TypeVar('LoggerLike', bound=logging.Logger)

@@ -3,10 +3,9 @@ import os.path
 import sys
 
 from engine import Pipeline
-from engine.logs import Log
+from logs import Logger
 from plugins import RedirectPlugin
 from plugins import ScopePlugin
-from queues import MessageQueue
 
 
 class Cmd:
@@ -25,7 +24,9 @@ class Cmd:
     '''
 
     def parse(self):
-        opts, args = getopt.getopt(sys.argv[1:], 's:d:o:p:h', ['source=', 'display', 'output', 'path', 'help'])
+        opts, args = getopt.getopt(sys.argv[1:],
+                                   's:d:o:p:h',
+                                   ['source=', 'display', 'output', 'path', 'help'])
 
         if any(opt in ['-h', '--help'] for opt, optarg in opts):
             print(self.usage)
@@ -58,7 +59,7 @@ class Cmd:
         scope_path = None
         if scope_paths is not None:
             if len(scope_paths) > 1:
-                Log.warn("Only support single scope path")
+                Logger.get_logger('cmds').warning("Only support single scope path")
             scope_path = scope_paths[0]
         pipeline = Pipeline(source, args, scope_path)
         pipeline.run()

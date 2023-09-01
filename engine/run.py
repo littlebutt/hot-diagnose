@@ -4,10 +4,8 @@ from typing import Any, Optional, List
 from types import ModuleType
 
 from fileutils import read_source_py
-from engine.logs import Log
 from engine.tracer import Tracer
-from typings import TRunner, T_tracer_callback_func
-
+from typings import TRunner, T_tracer_callback_func, LoggerLike
 
 __all__ = ['PyRunner']
 
@@ -23,19 +21,23 @@ class DummyLoader:
 
 class PyRunner(TRunner):
     """
-    The :class:`PyRunner` is for running Python script or package from the cammand line.
+    The :class:`PyRunner` is for running Python script or package from the
+    cammand line.
 
-    The idea of the class is first compiling the given source files and then executing the :obj:`code` with the args
-    from the command line. When executing the :obj:`code`, a trace is set to collect the runtime information. The
-    collected information  will be sent to the :class:`Q` for further using.
+    The idea of the class is first compiling the given source files and then
+    executing the :obj:`code` with the args from the command line. When
+    executing the :obj:`code`, a trace is set to collect the runtime
+    information. The collected information  will be sent to the :class:`Q`
+    for further using.
 
     Attributes:
 
-        tracer_callbacks: The callback functions invoked in the trace. Mostly, it will consume the
-        :class:`ActionMessageEntry` and produce the :class:`TraceMessageEntry` in the :class:`Q`
+        tracer_callbacks: The callback functions invoked in the trace. Mostly,
+        it will consume the :class:`ActionMessageEntry` and produce the
+        :class:`TraceMessageEntry` in the :class:`Q`
 
-        source: The path to the executed file. To ensure the source is runnable, the ``PYTHONPATH`` must be set before
-        running.
+        source: The path to the executed file. To ensure the source is runnable,
+        the ``PYTHONPATH`` must be set before running.
 
         args: The args used for the executed file.
 
@@ -46,9 +48,11 @@ class PyRunner(TRunner):
     def __init__(self,
                  source: str,
                  args: List[str],
-                 tracer_callbacks: Optional[List[T_tracer_callback_func]]):
+                 tracer_callbacks: Optional[List[T_tracer_callback_func]],
+                 logger: LoggerLike):
         self.args = args
         self.tracer_callbacks = tracer_callbacks
+        self.logger = logger
         if os.path.isabs(source):
             self.source = source
         else:
@@ -83,22 +87,21 @@ class PyRunner(TRunner):
 
     def _run(self, source: str, args: List[str]):
         source_byte = read_source_py(source)
-        code: Optional[bytes] = None
         mod = self._build_module(source)
         self._build_args(args, source)
         try:
             code = compile(source_byte, source, "exec", dont_inherit=True)
-        except Exception as e:
-            Log.error(f"Fail to compile code: {source}", e)
+        except Exception:
+            self.logger.error(f"Fail to compile code: {source}", exc_info=True)
             return
-        tracer = Tracer(self.tracer_callbacks)
+        tracer = Tracer(self.tracer_callbacks, logger=self.logger)
         tracer.start()
         try:
             exec(code, mod.__dict__)
             tracer.stop()
-        except Exception as e:
+        except Exception:
             tracer.stop()
-            Log.error(f"Fail to execute code: {source}", e)
+            self.logger.error(f"Fail to execute code: {source}", exc_info=True)
         finally:
             self._resume_args()
 

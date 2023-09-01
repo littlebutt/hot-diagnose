@@ -27,7 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 import re
-from typing import Callable, List, NewType, Optional, Tuple, TypeVar, cast
+from typing import Callable, List, Optional, Tuple, TypeVar, cast
 
 from server.ws.typings import ConnectionOption, UpgradeProtocol
 
