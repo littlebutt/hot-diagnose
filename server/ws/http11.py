@@ -28,9 +28,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import asyncio
 import re
-from typing import Any, Dict, Iterable, Iterator, List, Mapping, MutableMapping, Tuple, Union
+from typing import Any, Dict, Iterator, List, MutableMapping, Tuple
 
 from server.ws.exception import WebsocketException
+from server.ws.typings import HeadersLike
 
 # Maximum total size of headers is around 128 * 8 KiB = 1 MiB.
 MAX_HEADERS = 128
@@ -53,7 +54,7 @@ class Headers(MutableMapping[str, str]):
     __slots__ = ["_dict", "_list"]
 
     # Like dict, Headers accepts an optional "mapping or iterable" argument.
-    def __init__(self, *args: 'HeadersLike', **kwargs: str) -> None:
+    def __init__(self, *args: HeadersLike, **kwargs: str) -> None:
         self._dict: Dict[str, List[str]] = {}
         self._list: List[Tuple[str, str]] = []
         self.update(*args, **kwargs)
@@ -145,13 +146,6 @@ class Headers(MutableMapping[str, str]):
 
         """
         return iter(self._list)
-
-
-HeadersLike = Union[
-    Headers,
-    Mapping[str, str],
-    Iterable[Tuple[str, str]]
-]
 
 
 def d(value: bytes) -> str:

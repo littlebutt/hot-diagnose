@@ -2,14 +2,13 @@ import asyncio
 import functools
 import logging
 import socket
-import warnings
-from http.client import HTTPResponse
+import http.client # must be imported
 from types import TracebackType
 from typing import Optional, Set, Iterable, Type, Union, Callable, Awaitable, Any, Sequence, Generator
 
 from server.ws.misc import State
-from server.ws.http11 import Headers
 from server.ws.protocol import WebSocketServerProtocol
+from server.ws.typings import LoggerLike
 
 
 class WebSocketServer:
@@ -25,12 +24,11 @@ class WebSocketServer:
 
     Args:
         logger: logger for this server;
-            defaults to ``logging.getLogger("websockets.server")``;
-            see the :doc:`logging guide <../topics/logging>` for details.
+            defaults to ``logging.getLogger("websockets.server")``.
 
     """
 
-    def __init__(self, logger: Optional = None):
+    def __init__(self, logger: Optional['LoggerLike'] = None):
         if logger is None:
             logger = logging.getLogger("websockets.server")
         self.logger = logger
@@ -68,12 +66,10 @@ class WebSocketServer:
                 name = sock.getsockname()
             # In the unlikely event that someone runs websockets over a
             # protocol other than IP or Unix sockets, avoid crashing.
-            else:  # pragma: no cover
+            else:
                 name = str(sock.getsockname())
             self.logger.info("server listening on %s", name)
 
-        # Initialized here because we need a reference to the event loop.
-        # This should be moved back to __init__ when dropping Python < 3.10.
         self.closed_waiter = server.get_loop().create_future()
 
     def register(self, protocol: 'WebSocketServerProtocol') -> None:
@@ -169,17 +165,6 @@ class WebSocketServer:
 
         When :meth:`wait_closed` returns, all TCP connections are closed and
         all connection handlers have returned.
-
-        To ensure a fast shutdown, a connection handler should always be
-        awaiting at least one of:
-
-        * :meth:`~WebSocketServerProtocol.recv`: when the connection is closed,
-          it raises :exc:`~websockets.exceptions.ConnectionClosedOK`;
-        * :meth:`~WebSocketServerProtocol.wait_closed`: when the connection is
-          closed, it returns.
-
-        Then the connection handler is immediately notified of the shutdown;
-        it can clean up and exit.
 
         """
         await asyncio.shield(self.closed_waiter)
@@ -289,52 +274,9 @@ class Serve:
             see :meth:`~asyncio.loop.create_server` for details.
         port: TCP port the server listens on;
             see :meth:`~asyncio.loop.create_server` for details.
-        create_protocol: factory for the :class:`asyncio.Protocol` managing
-            the connection; defaults to :class:`WebSocketServerProtocol`; may
-            be set to a wrapper or a subclass to customize connection handling.
         logger: logger for this server;
-            defaults to ``logging.getLogger("websockets.server")``;
-            see the :doc:`logging guide <../topics/logging>` for details.
-        compression: shortcut that enables the "permessage-deflate" extension
-            by default; may be set to :obj:`None` to disable compression;
-            see the :doc:`compression guide <../topics/compression>` for details.
-        origins: acceptable values of the ``Origin`` header; include
-            :obj:`None` in the list if the lack of an origin is acceptable.
-            This is useful for defending against Cross-Site WebSocket
-            Hijacking attacks.
-        extensions: list of supported extensions, in order in which they
-            should be tried.
-        subprotocols: list of supported subprotocols, in order of decreasing
-            preference.
-        extra_headers (Union[HeadersLike, Callable[[str, Headers], HeadersLike]]):
-            arbitrary HTTP headers to add to the request; this can be
-            a :data:`~websockets.datastructures.HeadersLike` or a callable
-            taking the request path and headers in arguments and returning
-            a :data:`~websockets.datastructures.HeadersLike`.
-        server_header: value of  the ``Server`` response header;
-            defaults to ``"Python/x.y.z websockets/X.Y"``;
-            :obj:`None` removes the header.
-        process_request (Optional[Callable[[str, Headers], \
-            Awaitable[Optional[Tuple[http.HTTPStatus, HeadersLike, bytes]]]]]):
-            intercept HTTP request before the opening handshake;
-            see :meth:`~WebSocketServerProtocol.process_request` for details.
-        select_subprotocol: select a subprotocol supported by the client;
-            see :meth:`~WebSocketServerProtocol.select_subprotocol` for details.
-
-    See :class:`~websockets.legacy.protocol.WebSocketCommonProtocol` for the
-    documentation of ``ping_interval``, ``ping_timeout``, ``close_timeout``,
-    ``max_size``, ``max_queue``, ``read_limit``, and ``write_limit``.
-
-    Any other keyword arguments are passed the event loop's
-    :meth:`~asyncio.loop.create_server` method.
-
-    For example:
-
-    * You can set ``ssl`` to a :class:`~ssl.SSLContext` to enable TLS.
-
-    * You can set ``sock`` to a :obj:`~socket.socket` that you created
-      outside websockets.
-
+            defaults to ``logging.getLogger("websockets.server")``.
+        
     Returns:
         WebSocketServer: WebSocket server.
 
@@ -346,11 +288,7 @@ class Serve:
         host: Optional[Union[str, Sequence[str]]] = None,
         port: Optional[int] = None,
         *,
-        create_protocol: Optional[Callable[..., 'WebSocketServerProtocol']] = None,
-        logger: Optional = logging.getLogger("websockets.server"),
-        process_request: Optional[
-            Callable[[str, Headers], Awaitable[Optional[HTTPResponse]]]
-        ] = None,
+        logger: Optional['LoggerLike'] = logging.getLogger("websockets.server"),
         ping_interval: Optional[float] = 20,
         ping_timeout: Optional[float] = 20,
         close_timeout: Optional[float] = None,
@@ -360,42 +298,18 @@ class Serve:
         write_limit: int = 2**16,
         **kwargs: Any,
     ) -> None:
-        # Backwards compatibility: close_timeout used to be called timeout.
-        timeout: Optional[float] = kwargs.pop("timeout", None)
-        if timeout is None:
-            timeout = 10
-        else:
-            warnings.warn("rename timeout to close_timeout", DeprecationWarning)
-        # If both are specified, timeout is ignored.
-        if close_timeout is None:
-            close_timeout = timeout
-
-        # Backwards compatibility: create_protocol used to be called klass.
-        klass: Optional[Type['WebSocketServerProtocol']] = kwargs.pop("klass", None)
-        if klass is None:
-            klass = WebSocketServerProtocol
-        else:
-            warnings.warn("rename klass to create_protocol", DeprecationWarning)
-        # If both are specified, klass is ignored.
-        if create_protocol is None:
-            create_protocol = klass
+        close_timeout = 10
 
         ws_server = WebSocketServer(logger=logger)
-
-        secure = kwargs.get("ssl") is not None
 
         loop = asyncio.get_event_loop()
 
         factory = functools.partial(
-            create_protocol,
-            # For backwards compatibility with 10.0 or earlier. Done here in
-            # addition to WebSocketServerProtocol to trigger the deprecation
-            # warning once per serve() call rather than once per connection.
+            WebSocketServerProtocol,
             ws_handler,
             ws_server,
             host=host,
             port=port,
-            secure=secure,
             ping_interval=ping_interval,
             ping_timeout=ping_timeout,
             close_timeout=close_timeout,
@@ -405,7 +319,6 @@ class Serve:
             write_limit=write_limit,
             loop=loop,
             legacy_recv=False,
-            process_request=process_request,
             logger=logger,
         )
 
@@ -425,8 +338,6 @@ class Serve:
         self._create_server = create_server
         self.ws_server = ws_server
 
-    # async with serve(...)
-
     async def __aenter__(self) -> WebSocketServer:
         return await self
 
@@ -439,8 +350,6 @@ class Serve:
         self.ws_server.close()
         await self.ws_server.wait_closed()
 
-    # await serve(...)
-
     def __await__(self) -> Generator[Any, None, WebSocketServer]:
         # Create a suitable iterator by calling __await__ on a coroutine.
         return self.__await_impl__().__await__()
@@ -449,8 +358,6 @@ class Serve:
         server = await self._create_server()
         self.ws_server.wrap(server)
         return self.ws_server
-
-    # yield from serve(...) - remove when dropping Python < 3.10
 
     __iter__ = __await__
 

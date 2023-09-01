@@ -1,3 +1,31 @@
+"""
+Copyright (c) Aymeric Augustin and contributors
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of the copyright holder nor the names of its contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
+
 import asyncio
 import codecs
 import collections
@@ -16,7 +44,7 @@ from server.ws.exception import WebsocketException
 from server.ws.frames import Close, OP_CLOSE, Frame, Opcode, OK_CLOSE_CODES, OP_TEXT, OP_BINARY, OP_PING, OP_PONG, \
     OP_CONT, prepare_ctrl, prepare_data
 from server.ws.http11 import Headers, read_request
-from server.ws.typings import Data
+from server.ws.typings import Data, LoggerLike, ServerLike
 
 
 class WebSocketServerProtocol(asyncio.Protocol):
@@ -33,28 +61,17 @@ class WebSocketServerProtocol(asyncio.Protocol):
 
     The iterator exits normally when the connection is closed with close code
     1000 (OK) or 1001 (going away) or without a close code. It raises
-    a :exc:`~websockets.exceptions.ConnectionClosedError` when the connection
+    a :exc:`WebsocketException` when the connection
     is closed with any other code.
-
-    You may customize the opening handshake in a subclass by
-    overriding :meth:`process_request` or :meth:`select_subprotocol`.
 
     Args:
         ws_server: WebSocket server that created this connection.
-
-    See :func:`serve` for the documentation of ``ws_handler``, ``logger``, ``origins``,
-    ``extensions``, ``subprotocols``, ``extra_headers``, and ``server_header``.
-
-    See :class:`~websockets.legacy.protocol.WebSocketCommonProtocol` for the
-    documentation of ``ping_interval``, ``ping_timeout``, ``close_timeout``,
-    ``max_size``, ``max_queue``, ``read_limit``, and ``write_limit``.
-
     """
 
     def __init__(
         self,
         ws_handler: Callable[['WebSocketServerProtocol'], Awaitable[Any]],
-        ws_server: 'WebSocketServer',
+        ws_server: ServerLike,
         *,
         read_limit: int = 2 ** 16,
         write_limit: int = 2 ** 16,
@@ -62,7 +79,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
         max_queue: Optional[int] = 2 ** 5,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         close_timeout = 10,
-        logger: Optional = None,
+        logger: Optional[LoggerLike] = None,
         ping_interval: Optional[float] = 20,
         ping_timeout: Optional[float] = 20,
         **kwargs: Any,
@@ -124,7 +141,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
 
         This attribute may be used to detect disconnections. However, this
         approach is discouraged per the EAFP_ principle. Instead, you should
-        handle :exc:`~websockets.exceptions.ConnectionClosed` exceptions.
+        handle :exc:`WebsocketException` exceptions.
 
         .. _EAFP: https://docs.python.org/3/glossary.html#term-eafp
 
@@ -222,7 +239,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
         )
 
     # Copied from asyncio.FlowControlMixin
-    async def _drain_helper(self) -> None:  # pragma: no cover
+    async def _drain_helper(self) -> None:
         if self.connection_lost_waiter.done():
             raise ConnectionResetError("Connection lost")
         if not self._paused:
@@ -234,7 +251,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
         await waiter
 
     # Copied from asyncio.StreamWriter
-    async def _drain(self) -> None:  # pragma: no cover
+    async def _drain(self) -> None:
         if self.reader is not None:
             exc = self.reader.exception()
             if exc is not None:
@@ -356,7 +373,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
         """
         Check that the WebSocket connection is open.
 
-        Raise :exc:`~websockets.exceptions.ConnectionClosed` if it isn't.
+        Raise :exc:`WebsocketException` if it isn't.
 
         """
         # Handle cases from most common to least common for performance.
@@ -593,13 +610,13 @@ class WebSocketServerProtocol(asyncio.Protocol):
         after this coroutine returns.
 
         Raises:
-            InvalidMessage: if the HTTP message is malformed or isn't an
+            WebsocketException: if the HTTP message is malformed or isn't an
                 HTTP/1.1 GET request.
 
         """
         try:
             path, headers = await read_request(self.reader)
-        except asyncio.CancelledError:  # pragma: no cover
+        except asyncio.CancelledError:
             raise
         except Exception as exc:
             raise WebsocketException("InvalidMessage did not receive a valid HTTP request") from exc
@@ -673,7 +690,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
                 UTF-8.
 
         Raises:
-            ConnectionClosed: when the connection is closed.
+            WebsocketException: when the connection is closed.
 
         """
         await self.ensure_open()
@@ -716,7 +733,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
                 latency = await pong_waiter
 
         Raises:
-            ConnectionClosed: when the connection is closed.
+            WebsocketException: when the connection is closed.
             RuntimeError: if another ping was sent with the same data and
                 the corresponding pong wasn't received yet.
 
@@ -1117,7 +1134,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
             else:
                 waiter.set_exception(exc)
 
-    def pause_writing(self) -> None:  # pragma: no cover
+    def pause_writing(self) -> None:
         assert not self._paused
         self._paused = True
 
@@ -1126,11 +1143,9 @@ class WebSocketServerProtocol(asyncio.Protocol):
         Receive the next message.
 
         When the connection is closed, :meth:`recv` raises
-        :exc:`~websockets.exceptions.ConnectionClosed`. Specifically, it
-        raises :exc:`~websockets.exceptions.ConnectionClosedOK` after a normal
-        connection closure and
-        :exc:`~websockets.exceptions.ConnectionClosedError` after a protocol
-        error or a network failure. This is how you detect the end of the
+        :exc:`WebsocketException`. Specifically, it raises :exc:`WebsocketException` 
+        after a normal connection closure and :exc:`WebsocketException` after
+        a protocol error or a network failure. This is how you detect the end of the
         message stream.
 
         Canceling :meth:`recv` is safe. There's no risk of losing the next
@@ -1147,7 +1162,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
             .. _Binary: https://www.rfc-editor.org/rfc/rfc6455.html#section-5.6
 
         Raises:
-            ConnectionClosed: when the connection is closed.
+            WebsocketException: when the connection is closed.
             RuntimeError: if two coroutines call :meth:`recv` concurrently.
 
         """
@@ -1234,18 +1249,16 @@ class WebSocketServerProtocol(asyncio.Protocol):
            protocol error and the connection will be closed.
 
         When the connection is closed, :meth:`send` raises
-        :exc:`~websockets.exceptions.ConnectionClosed`. Specifically, it
-        raises :exc:`~websockets.exceptions.ConnectionClosedOK` after a normal
-        connection closure and
-        :exc:`~websockets.exceptions.ConnectionClosedError` after a protocol
-        error or a network failure.
+        :exc:`WebsocketException`. Specifically, it raises :exc:`WebsocketException`
+        after a normal connection closure and :exc:`WebsocketException` after
+        a protocol error or a network failure.
 
         Args:
             message (Union[Data, Iterable[Data], AsyncIterable[Data]): message
                 to send.
 
         Raises:
-            ConnectionClosed: when the connection is closed.
+            WebsocketException: when the connection is closed.
             TypeError: if ``message`` doesn't have a supported type.
 
         """

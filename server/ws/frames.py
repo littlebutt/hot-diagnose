@@ -1,3 +1,31 @@
+"""
+Copyright (c) Aymeric Augustin and contributors
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of the copyright holder nor the names of its contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
+
 import dataclasses
 import enum
 import io
@@ -7,7 +35,7 @@ import sys
 from typing import Callable, Optional, Tuple, Any, Awaitable
 
 from server.ws.exception import WebsocketException
-from server.ws.typings import Data
+from server.ws.typings import BytesLike, Data
 
 
 def apply_mask(data: bytes, mask: bytes) -> bytes:
@@ -112,9 +140,6 @@ OK_CLOSE_CODES = {
 }
 
 
-BytesLike = bytes, bytearray, memoryview
-
-
 @dataclasses.dataclass
 class Frame:
     """
@@ -198,10 +223,9 @@ class Frame:
         Args:
             mask: whether the frame should be masked i.e. whether the write
                 happens on the client side.
-            extensions: list of extensions, applied in order.
 
         Raises:
-            ProtocolError: if the frame contains incorrect values.
+            WebsocketException: if the frame contains incorrect values.
 
         """
         self.check()
@@ -245,7 +269,7 @@ class Frame:
         Check that reserved bits and opcode have acceptable values.
 
         Raises:
-            ProtocolError: if a reserved bit or the opcode is invalid.
+            WebsocketException: if a reserved bit or the opcode is invalid.
 
         """
         if self.rsv1 or self.rsv2 or self.rsv3:
@@ -274,11 +298,10 @@ class Frame:
             mask: whether the frame should be masked i.e. whether the read
                 happens on the server side.
             max_size: maximum payload size in bytes.
-            extensions: list of extensions, applied in reverse order.
 
         Raises:
-            PayloadTooBig: if the frame exceeds ``max_size``.
-            ProtocolError: if the frame contains incorrect values.
+            WebsocketException: if the frame exceeds ``max_size``.
+            WebsocketException: if the frame contains incorrect values.
 
         """
 
@@ -336,10 +359,9 @@ class Frame:
             write: function that writes bytes.
             mask: whether the frame should be masked i.e. whether to write
                 happens on the client side.
-            extensions: list of extensions, applied in order.
 
         Raises:
-            ProtocolError: if the frame contains incorrect values.
+            WebsocketException: if the frame contains incorrect values.
 
         """
         # The frame is written in a single call to write in order to prevent
@@ -436,8 +458,8 @@ class Close:
             data: payload of the close frame.
 
         Raises:
-            ProtocolError: if data is ill-formed.
-            UnicodeDecodeError: if the reason isn't valid UTF-8.
+            WebsocketException: if data is ill-formed.
+            WebsocketException: if the reason isn't valid UTF-8.
 
         """
         if len(data) >= 2:
@@ -464,7 +486,7 @@ class Close:
         Check that the close code has a valid value for a close frame.
 
         Raises:
-            ProtocolError: if the close code is invalid.
+            WebsocketException: if the close code is invalid.
 
         """
         if not (self.code in EXTERNAL_CLOSE_CODES or 3000 <= self.code < 5000):

@@ -1,3 +1,31 @@
+"""
+Copyright (c) Aymeric Augustin and contributors
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of the copyright holder nor the names of its contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
+
 import re
 from typing import Callable, List, NewType, Optional, Tuple, TypeVar, cast
 
@@ -55,7 +83,7 @@ def parse_list(
     ``header`` is assumed not to start or end with whitespace.
 
     (This function is designed for parsing an entire header value and
-    :func:`~websockets.http.read_headers` strips whitespace from values.)
+    :func:`read_headers` strips whitespace from values.)
 
     Return a list of items.
 
@@ -133,7 +161,7 @@ def parse_connection_option(
     Return the protocol value and the new position.
 
     Raises:
-        InvalidHeaderFormat: on invalid inputs.
+        RuntimeError: on invalid inputs.
 
     """
     item, pos = parse_token(header, pos, header_name)
@@ -150,7 +178,7 @@ def parse_connection(header: str) -> List[ConnectionOption]:
         header: value of the ``Connection`` header.
 
     Raises:
-        InvalidHeaderFormat: on invalid inputs.
+        RuntimeError: on invalid inputs.
 
     """
     return parse_list(parse_connection_option, header, 0, "Connection")
@@ -191,7 +219,7 @@ def parse_upgrade(header: str) -> List[UpgradeProtocol]:
         header: value of the ``Upgrade`` header.
 
     Raises:
-        InvalidHeaderFormat: on invalid inputs.
+        RuntimeError: on invalid inputs.
 
     """
     return parse_list(parse_upgrade_protocol, header, 0, "Upgrade")
