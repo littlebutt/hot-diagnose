@@ -303,6 +303,8 @@ class Serve:
 
         loop = asyncio.get_event_loop()
 
+        self.loop = loop
+
         factory = functools.partial(
             WebSocketServerProtocol,
             ws_handler,

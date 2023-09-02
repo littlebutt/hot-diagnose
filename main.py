@@ -1,6 +1,7 @@
 from cmds import Cmd
 
 from plugins.redirect import RedirectPlugin
+from server.base import RenderServer
 
 if __name__ == '__main__':
     cmd = Cmd()

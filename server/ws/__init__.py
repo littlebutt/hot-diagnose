@@ -29,9 +29,9 @@ easy::
 .. _`websockets`: https://github.com/python-websockets/websockets
 """
 
-from protocol import WebSocketServerProtocol as Websocket
-from serve import serve
-from exception import WebsocketException
+from server.ws.protocol import WebSocketServerProtocol as Websocket
+from server.ws.serve import serve
+from server.ws.exception import WebsocketException
 
 
 __all__ = ['Websocket', 'serve', 'WebsocketException']

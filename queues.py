@@ -28,11 +28,12 @@ class TraceMessageEntry(MessageEntry):
         return f"<TraceMessageEntry id={self.id} filename={self.filename} lineno={self.lineno} cb_rts={self.cb_rts}>"
 
 
+@dataclass
 class ActionMessageEntry(MessageEntry):
     id: int
     action: str
     value: str
-    type = field(default='ActionMessage')
+    type: str = field(default='ActionMessage')
 
     def __repr__(self):
         return f"<ActionMessageEntry id={self.id} action={self.action} value={self.value}>"
