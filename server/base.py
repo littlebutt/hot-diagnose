@@ -14,17 +14,13 @@ from typings import LoggerLike
 class RenderServer:
 
     def __init__(self,
-                 hostname: Union[str, Sequence[str]] = 'localhost',
-                 port: int = 8765,
+                 hostname: Union[str, Sequence[str]],
+                 port: int,
                  *,
-                 ws_serve: Optional['serve'] = None,
                  logger: Optional['LoggerLike'] = None):
         self.websocket_holder = None
         self.running = False
         self.serve = None
-        if ws_serve is not None:
-            self.serve = lambda: ws_serve
-            return
 
         if logger is None:
             logger = Logger.get_logger('server')
@@ -34,11 +30,12 @@ class RenderServer:
 
     async def ws_send_loop(self, loop: asyncio.AbstractEventLoop):
         while self.websocket_holder is None:
+            print("GET HERE")
             pass
 
         async def _send_loop():
             while True:
-                for message in Q.request_queue:
+                for message in Q.response_queue:
                     await self.websocket_holder.send(parse_from_trace(message))
 
         with concurrent.futures.ProcessPoolExecutor() as pool:
@@ -49,6 +46,8 @@ class RenderServer:
 
         async def _ws_handler(ws: Websocket):
             async for message in ws:
+                for message in Q.response_queue:
+                    await self.websocket_holder.send(parse_from_trace(message))
                 if self.websocket_holder is None:
                     self.websocket_holder = ws
                 Q.put_response(parse_to_action(message))
@@ -69,13 +68,15 @@ class RenderServer:
         return _serve
 
     def run(self):
-        async def _run():
+        async def _inner():
             async with self._run():
+                # await self.ws_send_loop(self.loop)
                 await asyncio.Future()
-                await self.ws_send_loop(self.loop)
-        asyncio.run(_run())
+                # await asyncio.sleep(0)
+
+        asyncio.run(_inner())
 
 if __name__ == '__main__':
 
-    rs = RenderServer()
+    rs = RenderServer(hostname='localhost', port=8765)
     rs.run()

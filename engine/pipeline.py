@@ -1,10 +1,12 @@
 import os.path
 from typing import List, Optional, ClassVar, Dict
 
+from engine.dispatch import Dispatcher
 from engine.run import PyRunner
 from fs.base import FS
 from fs.models import Path, Directory
 from logs import Logger
+from server import RenderServer
 from typings import TPlugin, Pair, LoggerLike
 
 
@@ -18,6 +20,9 @@ class Pipeline:
                  *,
                  exclude_dir: Optional[List[str]] = None,
                  exclude_file: Optional[List[str]] = None,
+                 max_workers: int = 2,
+                 server_hostname: str = 'localhost',
+                 port: int = 8765,
                  logger: Optional['LoggerLike'] = None):
         assert len(sources) > 0
         if len(sources) > 1:
@@ -35,9 +40,30 @@ class Pipeline:
                      exclude_file=self.exclude_file)
         self.root_dir = Directory(dirname=os.path.abspath(scope_path),
                                   content=[])
+        self.dispatcher = Dispatcher(max_workers=max_workers)
+        self.render_server = RenderServer(hostname=server_hostname, port=port)
 
-    def _prepare(self):
+    def do_process(self):
+        Pipeline.do_preprocess()
+        self.logger.info("finish doing preprocess")
+
+        runner = PyRunner(source=self.source, args=self.args,
+                          tracer_callbacks=[p[0].tracer_callback
+                                            for _, p in Pipeline.plugins.items()
+                                            if p[1] and
+                                            hasattr(p[0], 'tracer_callback')],
+                          logger=self.logger)
+        runner.run()
+        Pipeline.do_postprocess()
+        self.logger.info("finish doing postprocess")
+
+    def do_server(self):
+        self.render_server.run()
+
+    def prepare(self):
         self.fs.build(self.root_dir)
+        self.dispatcher.add_callable(self.do_process)
+        self.dispatcher.add_callable(self.do_server)
 
     @classmethod
     def do_preprocess(cls):
@@ -54,19 +80,8 @@ class Pipeline:
                 plugin.on_postprocess()
 
     def run(self):
-        self._prepare()
-        Pipeline.do_preprocess()
-        self.logger.info("finish doing preprocess")
-
-        runner = PyRunner(source=self.source, args=self.args,
-                          tracer_callbacks=[p[0].tracer_callback
-                                            for _, p in Pipeline.plugins.items()
-                                            if p[1] and
-                                            hasattr(p[0], 'tracer_callback')],
-                          logger=self.logger)
-        runner.run()
-        Pipeline.do_postprocess()
-        self.logger.info("finish doing postprocess")
+        self.prepare()
+        self.dispatcher.dispatch()
 
     @classmethod
     def add_plugin(cls, enabled: bool = False):

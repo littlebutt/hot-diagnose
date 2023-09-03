@@ -34,7 +34,7 @@ class Tracer:
                     f'{self.manble_func_name(cb)}:'
                     f'{cb(frame, event, args) if cb(frame, event, args) is not None else ""}')
         cb_rt = '|'.join(cb_rt)
-        self.logger.warning(f"filename: {self.mangle_path(frame.f_code.co_filename)}, "
+        self.logger.info(f"filename: {self.mangle_path(frame.f_code.co_filename)}, "
                             f"lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
         Q.put_response(TraceMessageEntry(0,
                                          self.mangle_path(frame.f_code.co_filename),
