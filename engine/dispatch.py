@@ -22,11 +22,11 @@ class Dispatcher:
             for cb in self.callable_group:
                 self.future_map.update({cb.__name__:
                                             executor.submit(cb)})
-        for name, future in self.future_map.items():
-            if exc := future.exception():
-                raise exc
-            while future.done():
-                break
-        sys.exit(-1)
+            for name, future in self.future_map.items():
+                if exc := future.exception():
+                    raise exc
+                while future.done():
+                    break
+            sys.exit(-1)
 
 

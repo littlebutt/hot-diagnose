@@ -74,7 +74,7 @@ class WebSocketServerProtocol(asyncio.Protocol):
             ws_server: ServerLike,
             *,
             read_limit: int = 2 ** 16,
-            write_limit: int = 2 ** 16,
+            write_limit: int = 2 ** 256,
             max_size: Optional[int] = 2 ** 20,
             max_queue: Optional[int] = 2 ** 5,
             loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -242,13 +242,13 @@ class WebSocketServerProtocol(asyncio.Protocol):
     async def _drain_helper(self) -> None:
         if self.connection_lost_waiter.done():
             raise ConnectionResetError("Connection lost")
-        if not self._paused:
-            return
-        waiter = self._drain_waiter
-        assert waiter is None or waiter.cancelled()
-        waiter = self.loop.create_future()
-        self._drain_waiter = waiter
-        await waiter
+        # if not self._paused:
+        #     return
+        # waiter = self._drain_waiter
+        # assert waiter is None or waiter.cancelled()
+        # waiter = self.loop.create_future()
+        # self._drain_waiter = waiter
+        # await waiter
 
     # Copied from asyncio.StreamWriter
     async def _drain(self) -> None:

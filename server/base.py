@@ -28,28 +28,17 @@ class RenderServer:
         self.port = port
         self.logger = logger
 
-    async def ws_send_loop(self, loop: asyncio.AbstractEventLoop):
-        while self.websocket_holder is None:
-            print("GET HERE")
-            pass
-
-        async def _send_loop():
-            while True:
-                for message in Q.response_queue:
-                    await self.websocket_holder.send(parse_from_trace(message))
-
-        with concurrent.futures.ProcessPoolExecutor() as pool:
-            await loop.run_in_executor(pool, _send_loop)
-
     def _build_serve(self):
         assert self.serve is None
 
         async def _ws_handler(ws: Websocket):
+            for _message in Q.response_queue.queue:
+                print(_message)
+                try:
+                    await ws.send(parse_from_trace(_message))
+                except Exception as e:
+                    print(e)
             async for message in ws:
-                for message in Q.response_queue:
-                    await self.websocket_holder.send(parse_from_trace(message))
-                if self.websocket_holder is None:
-                    self.websocket_holder = ws
                 Q.put_response(parse_to_action(message))
 
         self.serve = functools.partial(serve,

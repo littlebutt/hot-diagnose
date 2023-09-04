@@ -77,6 +77,25 @@ class MessageQueue(queue.Queue):
             self._get_id += 1
             yield self.queue[self._get_id]
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._get_id += 1
+        if self._get_id < self._self_id:
+            return self.queue[self._get_id]
+        else:
+            raise StopIteration
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        self._get_id += 1
+        if self._get_id < self._self_id:
+            return self.queue[self._get_id]
+        else:
+            raise StopAsyncIteration
 
 class DualMessageQueue:
     request_queue: ClassVar[MessageQueue] = MessageQueue()
