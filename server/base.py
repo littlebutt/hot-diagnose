@@ -33,11 +33,7 @@ class RenderServer:
 
         async def _ws_handler(ws: Websocket):
             for _message in Q.response_queue.queue:
-                print(_message)
-                try:
-                    await ws.send(parse_from_trace(_message))
-                except Exception as e:
-                    print(e)
+                await ws.send(parse_from_trace(_message))
             async for message in ws:
                 Q.put_response(parse_to_action(message))
 
