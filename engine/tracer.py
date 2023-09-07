@@ -8,6 +8,9 @@ from typings import T_frame, T_event, T_tracefunc, T_tracer_callback_func, \
     LoggerLike
 
 
+THIS_FILE = __file__.rstrip('co')
+
+
 class Tracer:
 
     def __init__(self,
@@ -16,28 +19,33 @@ class Tracer:
         self.callbacks = callbacks
         self.logger = logger
 
-    @staticmethod
-    def mangle_path(path: str) -> str:
-        if re.match(r'^<.*>$', path) is not None:
-            return f'inner file {path}'
+    def _mangle_path(self, path: str) -> str:
         return os.path.abspath(path)
 
+    def _is_inner_module(self, path: str) -> bool:
+        if re.match(r'^<.*>$', path) is not None:
+            return True
+        return False
+
     @staticmethod
-    def manble_func_name(cb: Callable):
+    def mangle_func_name(cb: Callable):
         return cb.__qualname__.split('.')[0]
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
+        if frame.f_code.co_filename in THIS_FILE \
+                or self._is_inner_module(frame.f_code.co_filename):
+            return None
         cb_rt = []
         if self.callbacks is not None:
             for cb in self.callbacks:
                 cb_rt.append(
-                    f'{self.manble_func_name(cb)}:'
+                    f'{self.mangle_func_name(cb)}:'
                     f'{cb(frame, event, args) if cb(frame, event, args) is not None else ""}')
         cb_rt = '|'.join(cb_rt)
-        self.logger.info(f"filename: {self.mangle_path(frame.f_code.co_filename)}, "
+        self.logger.info(f"filename: {self._mangle_path(frame.f_code.co_filename)}, "
                             f"lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
-        Q.put_response(TraceMessageEntry(0,
-                                         self.mangle_path(frame.f_code.co_filename),
+        Q.put(TraceMessageEntry(0,
+                                         self._mangle_path(frame.f_code.co_filename),
                                          frame.f_lineno, cb_rt))
         return self._trace_func
 

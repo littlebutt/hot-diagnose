@@ -49,7 +49,7 @@ class MessageQueue(queue.Queue):
     queue: List[T]
 
     def _init(self, maxsize):
-        self.queue = []
+        self.queue = list()
 
     def _put(self, message_entry: T) -> None:
         message_entry.id = self._self_id
@@ -57,82 +57,23 @@ class MessageQueue(queue.Queue):
         self.queue.append(message_entry)
 
     def _get(self) -> T:
-        assert self._get_id < self._self_id
-        self._get_id += 1
-        return self.queue[self._get_id]
+        return self.queue.pop(0)
 
     def _qsize(self) -> int:
-        return self._self_id - self._get_id - 1
-
-    def play_back(self):
-        self._get_id = -1
+        return len(self.queue)
 
     def clear(self):
-        self._get_id = -1
         self._self_id = 0
         self.queue.clear()
-
-    def enumerate(self):
-        while self._get_id < self._self_id - 1:
-            self._get_id += 1
-            yield self.queue[self._get_id]
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        self._get_id += 1
-        if self._get_id < self._self_id:
-            return self.queue[self._get_id]
-        else:
+        try:
+            return self.queue.pop(0)
+        except IndexError:
             raise StopIteration
+        
 
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        self._get_id += 1
-        if self._get_id < self._self_id:
-            return self.queue[self._get_id]
-        else:
-            raise StopAsyncIteration
-
-class DualMessageQueue:
-    request_queue: ClassVar[MessageQueue] = MessageQueue()
-    response_queue: ClassVar[MessageQueue] = MessageQueue()
-
-    @classmethod
-    def put_request(cls, message_entry: T):
-        cls.request_queue.put(message_entry)
-
-    @classmethod
-    def get_request(cls):
-        return cls.request_queue.get()
-
-    @classmethod
-    def put_response(cls, message_entry: T):
-        cls.response_queue.put(message_entry)
-
-    @classmethod
-    def get_response(cls):
-        return cls.response_queue.get()
-
-    @classmethod
-    def size(cls) -> Tuple[int, int]:
-        return cls.request_queue.qsize(), cls.response_queue.qsize()
-
-    @classmethod
-    def reset(cls):
-        cls.request_queue.clear()
-        cls.response_queue.clear()
-
-    @classmethod
-    def get_request_queue(cls):
-        return cls.request_queue
-
-    @classmethod
-    def get_response_queue(cls):
-        return cls.response_queue
-
-
-Q = DualMessageQueue
+Q = MessageQueue()

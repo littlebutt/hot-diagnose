@@ -1,5 +1,4 @@
 import asyncio
-import concurrent.futures
 import functools
 from typing import Optional, Union, Sequence
 
@@ -32,10 +31,10 @@ class RenderServer:
         assert self.serve is None
 
         async def _ws_handler(ws: Websocket):
-            for _message in Q.response_queue.queue:
+            for _message in Q:
                 await ws.send(parse_from_trace(_message))
             async for message in ws:
-                Q.put_response(parse_to_action(message))
+                Q.put(parse_to_action(message))
 
         self.serve = functools.partial(serve,
                                        ws_handler=_ws_handler,
@@ -55,10 +54,7 @@ class RenderServer:
     def run(self):
         async def _inner():
             async with self._run():
-                # await self.ws_send_loop(self.loop)
                 await asyncio.Future()
-                # await asyncio.sleep(0)
-
         asyncio.run(_inner())
 
 if __name__ == '__main__':
