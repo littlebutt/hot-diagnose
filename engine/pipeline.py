@@ -14,7 +14,7 @@ class Pipeline:
     plugins: ClassVar[Dict[str, Pair[TPlugin, bool]]] = dict()
 
     def __init__(self,
-                 sources: List[str],
+                 source: str,
                  args: List[str],
                  scope_path: str,
                  *,
@@ -24,12 +24,9 @@ class Pipeline:
                  server_hostname: str = 'localhost',
                  port: int = 8765,
                  logger: Optional['LoggerLike'] = None):
-        assert len(sources) > 0
-        if len(sources) > 1:
-            raise NotImplementedError("Cannot support multiple sources")
         if logger is None:
             logger = Logger.get_logger('engine')
-        self.source = sources[0]
+        self.source = source
         self.args = args
         self.exclude_dir = exclude_dir
         self.exclude_file = exclude_file
@@ -38,8 +35,6 @@ class Pipeline:
         self.fs = FS(Path(scope_path),
                      exclude_dir=self.exclude_dir,
                      exclude_file=self.exclude_file)
-        self.root_dir = Directory(dirname=os.path.abspath(scope_path),
-                                  content=[])
         self.dispatcher = Dispatcher(max_workers=max_workers)
         self.render_server = RenderServer(hostname=server_hostname, port=port)
 
@@ -47,11 +42,10 @@ class Pipeline:
         Pipeline.do_preprocess()
         self.logger.info("finish doing preprocess")
 
-        runner = PyRunner(source=self.source, args=self.args,
-                          tracer_callbacks=[p[0].tracer_callback
-                                            for _, p in Pipeline.plugins.items()
-                                            if p[1] and
-                                            hasattr(p[0], 'tracer_callback')],
+        runner = PyRunner(source=self.source,
+                          args=self.args,
+                          tracer_callbacks=[p[0].tracer_callback for _, p in Pipeline.plugins.items()
+                                            if p[1] and hasattr(p[0], 'tracer_callback')],
                           logger=self.logger)
         runner.run()
         Pipeline.do_postprocess()
@@ -61,7 +55,7 @@ class Pipeline:
         self.render_server.run()
 
     def prepare(self):
-        self.fs.build(self.root_dir)
+        self.fs.build()
         self.dispatcher.add_callable(self.do_process)
         self.dispatcher.add_callable(self.do_server)
 

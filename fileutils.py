@@ -1,4 +1,7 @@
+import hashlib
+import ntpath
 import os.path
+from os import PathLike
 from typing import Tuple
 
 
@@ -30,3 +33,23 @@ def read_source_py_with_line(filename: str) -> Tuple[int, str]:
         while line := f.readline():
             lineno += 1
             yield lineno, line
+
+
+# Copied from https://github.com/nedbat/coveragepy
+def flat_filename(filename: PathLike | str):
+    filename = os.fspath(filename)
+    dirname, basename = ntpath.split(filename)
+    if dirname:
+        fp = hashlib.new('sha3_256', dirname.encode('UTF-8')).hexdigest()[:16]
+        prefix = f'f_{fp}_'
+    else:
+        prefix = ''
+    return prefix + basename.replace('.', '_')
+
+
+def flat_dirname(dirname: PathLike | str):
+    dirname = os.fspath(dirname)
+    fp = hashlib.new('sha3_256', dirname.encode('UTF-8')).hexdigest()[:16]
+    return 'd_' + fp
+
+

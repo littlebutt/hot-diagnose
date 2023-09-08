@@ -30,13 +30,12 @@ class Line:
 
 @dataclass
 class File:
-    filename: PathLike[str]
+    filename: PathLike | str
     extension: str | None = field(default_factory=str)
-    content: List['Line'] = field(default_factory=list)
+    lines: List['Line'] = field(default_factory=list)
 
     def __repr__(self):
-        return f'<File filename={os.fspath(self.filename)} ' \
-               f'extension={self.extension}>'
+        return f'<File filename={os.fspath(self.filename)} extension={self.extension}>'
 
     def __str__(self):
         return self.__repr__()
@@ -44,8 +43,8 @@ class File:
 
 @dataclass
 class Directory:
-    dirname: PathLike[str]
-    content: List[Union['File', 'Directory']] = field(default_factory=list)
+    dirname: PathLike | str
+    files_or_directories: List[Union['File', 'Directory']] = field(default_factory=list)
 
     def __repr__(self):
         return f'<Directory dirname={os.fspath(self.dirname)}>'

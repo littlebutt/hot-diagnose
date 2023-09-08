@@ -98,11 +98,10 @@ class PyRunner(TRunner):
         tracer.start()
         try:
             exec(code, mod.__dict__)
-            tracer.stop()
         except Exception:
-            tracer.stop()
             self.logger.error(f"Fail to execute code: {source}", exc_info=True)
         finally:
+            tracer.stop()
             self._resume_args()
 
     def run(self):
