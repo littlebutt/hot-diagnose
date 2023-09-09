@@ -1,10 +1,10 @@
-import os.path
 from typing import List, Optional, ClassVar, Dict
 
 from engine.dispatch import Dispatcher
+from engine.report import Reporter
 from engine.run import PyRunner
 from fs.base import FS
-from fs.models import Path, Directory
+from fs import Path
 from logs import Logger
 from server import RenderServer
 from typings import TPlugin, Pair, LoggerLike
@@ -37,6 +37,7 @@ class Pipeline:
                      exclude_file=self.exclude_file)
         self.dispatcher = Dispatcher(max_workers=max_workers)
         self.render_server = RenderServer(hostname=server_hostname, port=port)
+        self.reporter = Reporter(self.fs, './server/templates', logger=self.logger)
 
     def do_process(self):
         Pipeline.do_preprocess()
@@ -56,6 +57,8 @@ class Pipeline:
 
     def prepare(self):
         self.fs.build()
+        self.reporter.prepare()
+        self.reporter.build_htmls()
         self.dispatcher.add_callable(self.do_process)
         self.dispatcher.add_callable(self.do_server)
 

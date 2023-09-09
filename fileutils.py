@@ -1,8 +1,11 @@
 import hashlib
 import ntpath
 import os.path
+import pathlib
+import re
+import sys
 from os import PathLike
-from typing import Tuple
+from typing import Tuple, Dict, List
 
 
 def read_source_py(filename: str) -> bytes: # also for pyw
@@ -53,3 +56,19 @@ def flat_dirname(dirname: PathLike | str):
     return 'd_' + fp
 
 
+def get_home_dir() -> str:
+    return str(pathlib.Path.home())
+
+
+def mkdir(location: PathLike | str, dirname: str):
+    path = os.path.join(location, dirname)
+    if os.path.exists(path):
+        return path
+    os.mkdir(path)
+    return path
+
+
+def write_file(filename: str, content: str | bytes):
+    content = re.sub(r"(\A\s+)|(\s+$)", "", content, flags=re.MULTILINE) + "\n"
+    with open(filename, "wb") as fout:
+        fout.write(content.encode("ascii", "xmlcharrefreplace"))

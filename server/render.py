@@ -3,6 +3,9 @@ import re
 from typing import Dict, Any
 
 
+__all__ = ['Template']
+
+
 class CodeBuilder:
     """
     Build source code conveniently.

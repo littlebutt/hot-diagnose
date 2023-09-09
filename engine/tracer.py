@@ -43,10 +43,10 @@ class Tracer:
                     f'{cb(frame, event, args) if cb(frame, event, args) is not None else ""}')
         cb_rt = '|'.join(cb_rt)
         self.logger.info(f"filename: {self._mangle_path(frame.f_code.co_filename)}, "
-                            f"lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
+                         f"lineno: {frame.f_lineno}, cb_rt: {cb_rt}")
         Q.put(TraceMessageEntry(0,
-                                         self._mangle_path(frame.f_code.co_filename),
-                                         frame.f_lineno, cb_rt))
+                                self._mangle_path(frame.f_code.co_filename),
+                                frame.f_lineno, cb_rt))
         return self._trace_func
 
     def start(self):
@@ -54,7 +54,7 @@ class Tracer:
         if trace_func is not None:
             self.logger.warning("Trace function has been already amounted")
             sys.settrace(None)
-        cast(self._trace_func, T_tracefunc)
+        self._trace_func = cast(T_tracefunc, self._trace_func)
         self.logger.info("Trace function is amounted")
         sys.settrace(self._trace_func)
 

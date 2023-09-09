@@ -9,7 +9,6 @@ __all__ = ['Path', 'Line', 'File', 'Directory']
 
 @dataclass
 class Path(PathLike, ABC):
-
     _path: str
 
     def __fspath__(self) -> Any:
@@ -25,12 +24,13 @@ class Line:
         return f'<Line content={self.content} lineno={self.lineno}>'
 
     def __str__(self):
-        return self.content.strip()
+        return self.content
 
 
 @dataclass
 class File:
     filename: PathLike | str
+    basename: str
     extension: str | None = field(default_factory=str)
     lines: List['Line'] = field(default_factory=list)
 
@@ -38,7 +38,7 @@ class File:
         return f'<File filename={os.fspath(self.filename)} extension={self.extension}>'
 
     def __str__(self):
-        return self.__repr__()
+        return ''.join([line.content for line in self.lines])
 
 
 @dataclass

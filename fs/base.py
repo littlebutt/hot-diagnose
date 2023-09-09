@@ -1,7 +1,8 @@
+import functools
 import os
 import re
 from os import PathLike
-from typing import List, Tuple, Optional, Generator, Any
+from typing import List, Tuple, Optional, Generator, Any, Callable
 
 import fileutils
 from logs import Logger
@@ -92,7 +93,7 @@ class FS:
             for info in os.listdir(path):
                 yield path, info
         except Exception:
-            Logger.get_logger('fs').error(f'Fail to walk path {path}', exc_info=True)
+            self.logger.error(f'Fail to walk path {path}', exc_info=True)
             return None
 
     def _inspect_file(self, file: PathLike | str):
@@ -102,9 +103,10 @@ class FS:
         content = []
         if ext == '.py' or ext == '.pyw':
             for (lineno, line) in fileutils.read_source_py_with_line(file):
-                content.append(Line(lineno=lineno, content=line))
+                content.append(Line(lineno=lineno, content=str(line, encoding='UTF-8')))
         else:
-            content.append(Line(lineno=1, content=fileutils.read_source(file)))
+            # TODO: ext == '.html'
+            content.append(Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8')))
         return ext, content
 
     def build(self):
@@ -123,7 +125,7 @@ class FS:
             None
         """
         if os.path.isfile(self.path):
-            f = File(filename=self.path)
+            f = File(filename=self.path, basename=os.path.basename(self.path))
             f.extension, f.lines = self._inspect_file(self.path)
             self.root = f
             return f
@@ -141,40 +143,51 @@ class FS:
                 _short_d = _d
                 _d = os.path.join(_p, _d)
                 if os.path.isdir(_d):
+                    self.logger.info(f"FS.build: Scanning the directory {_d}")
                     # Exclude the directories in `exclude_dirs`
                     if any([self.match(pattern, _d)
                             or self.match(pattern, _short_d)
                             for pattern in self.exclude_dirs]):
+                        self.logger.info(f"FS.build: The directory {_d} is excluded")
                         continue
                     _new_dir = Directory(dirname=_d, files_or_directories=[])
                     _dir.files_or_directories.append(_new_dir)
                     stack.append((_d, _new_dir))
                 elif os.path.isfile(_d):
+                    self.logger.info(f"FS.build: Scanning the file {_d}")
                     # Exclude the files in `exclude_files`
                     if any(([self.match(pattern, _d)
                              or self.match(pattern, _short_d)
                              for pattern in self.exclude_files])):
+                        self.logger.info(f"FS.build: The file {_d} is excluded")
                         continue
-                    _new_file = File(filename=_d)
+                    _new_file = File(filename=_d, basename=os.path.basename(_d))
                     _new_file.extension, _new_file.lines = self._inspect_file(_d)
                     _dir.files_or_directories.append(_new_file)
                 else:
+                    self.logger.warning(f"FS.build: Unexpected target {_d}")
                     continue
 
-    def ensure_walked(self):
-        return self.root is not None
+    def ensure_built(self):
+        if self.root is None:
+            raise RuntimeError("FS must be built before walking")
 
-    def _walk(self, root_dir: Directory) -> Generator[File, Any, Any]:
+    def _walk(self, root_dir: Directory, hook: Callable[[File | Directory], Any]) -> Generator[File, Any, Any]:
         stack = [
             root_dir
         ]
         while len(stack) > 0:
             _d = stack.pop(0)
             if isinstance(_d, File):
+                self.logger.info(f"FS.walk: Walking the file {_d}")
+                hook(_d)
                 yield _d
             elif isinstance(_d, Directory):
+                self.logger.info(f"FS.walk: Walking the directory {_d}")
                 for _e in _d.files_or_directories:
                     if isinstance(_e, File):
+                        self.logger.info(f"FS.walk: Walking the file {_e}")
+                        hook(_e)
                         yield _e
                     elif isinstance(_e, Directory):
                         stack.append(_e)
@@ -200,8 +213,7 @@ class FS:
             RuntimeError: The object is neither :class:`File` nor :class:`Directory` RuntimeError: The :class:`FS` was
             not built.
         """
-        if not self.ensure_walked():
-            raise RuntimeError("FS must be built before walking")
+        self.ensure_built()
         path = os.fspath(path)
         path = os.path.abspath(path)
         stack = [
@@ -210,11 +222,13 @@ class FS:
         while len(stack) > 0:
             _d = stack.pop(0)
             if isinstance(_d, File):
+                self.logger.info(f"FS.find: Finding the file {_d}")
                 if _d.filename == path:
                     return _d
                 else:
                     continue
             elif isinstance(_d, Directory):
+                self.logger.info(f"FS.find: Finding the directory {_d}")
                 if _d.dirname == path:
                     return _d
                 else:
@@ -224,7 +238,12 @@ class FS:
                 raise RuntimeError(f'Unknown File {_d!r}')
         return None
 
-    def walk(self, path: Optional[PathLike[str]] = None) -> Generator[File, Any, Any]:
+    def _wrap_hook(self, hook: Optional[Callable[[File | Directory], None]] = None):
+        return lambda x: hook(x) if hook is not None else None
+
+    def walk(self,
+             path: Optional[PathLike[str]] = None,
+             hook: Optional[Callable[[File | Directory], None]] = None) -> Generator[File, Any, Any]:
         """
         Walk all :class:`Directory` or :class:`File` in the :class:`FS`.
 
@@ -236,7 +255,8 @@ class FS:
                 print(_w)
 
         Args:
-            path: Optional, the root directory for the walking if given
+            path: The root directory for the walking if given.
+            hook: The hook function invoked when walking to a :class:`File` or :class:`Directory`.
 
         Return:
             Files
@@ -245,8 +265,8 @@ class FS:
             RuntimeError: The :class:`FS` was not built
             RuntimeError: The given path is not found
         """
-        if not self.ensure_walked():
-            raise RuntimeError("FS must be built before walking")
+        self.ensure_built()
+        hook = self._wrap_hook(hook)
         if path is not None:
             res = self.find(path)
             if res is None:
@@ -254,9 +274,9 @@ class FS:
             if isinstance(res, File):
                 return res
             else:
-                yield from self._walk(res)
+                yield from self._walk(res, hook=hook)
         else:
-            yield from self._walk(self.root)
+            yield from self._walk(self.root, hook=hook)
 
 if __name__ == '__main__':
     fs = FS('.')

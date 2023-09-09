@@ -6,6 +6,12 @@ from fs.models import Directory, File
 from fs.typings import HTML_text, HTML_classname, HTML_href
 
 
+__all__ = ['convert_directory_to_context',
+           'convert_directory_to_title',
+           'convert_file_to_context',
+           'convert_file_to_title']
+
+
 def convert_directory_to_context(directory: Directory) -> Mapping[str, Tuple[HTML_text, HTML_classname, HTML_href]]:
     context = dict()
     for content in directory.files_or_directories:
@@ -27,7 +33,7 @@ def convert_directory_to_title(directory: Directory) -> str:
 def convert_file_to_context(file: File) -> Mapping[str, Tuple[HTML_text, HTML_text, HTML_classname]]:
     context = dict()
     for line in file.lines:
-        context[line.lineno] = (line.lineno, line.content, 'c_' + line.lineno)
+        context[line.lineno] = (line.lineno, line.content, 'c_' + str(line.lineno))
     return context
 
 
