@@ -1,10 +1,9 @@
 import os
 from os import PathLike
-from typing import Optional, cast
+from typing import Any, Mapping, Optional, cast
 
 import fileutils
-from fs import FS, File, Directory, convert_file_to_title, convert_file_to_context, convert_directory_to_title, \
-    convert_directory_to_context
+from fs import FS, File, Directory, convert_file_to_context, convert_directory_to_context
 from logs import Logger
 from server import Template
 from typings import LoggerLike
@@ -48,39 +47,38 @@ class Reporter:
     def _walk_hook(self, target: File | Directory) -> None:
         if isinstance(target, File):
             target = cast(File, target)
-            html_name = convert_file_to_title(target)
-            html_context = convert_file_to_context(target)
-            self.file_context[html_name] = html_context
+            context = convert_file_to_context(target)
+            self.file_context[target.filename] = context
         elif isinstance(target, Directory):
             target = cast(Directory, target)
-            html_name = convert_directory_to_title(target)
-            html_context = convert_directory_to_context(target)
-            self.file_context[html_name] = html_context
+            context = convert_directory_to_context(target)
+            self.file_context[target.dirname] = context
         else:
             self.logger.warning(f"Unexpected file {target}")
+    
+    def _build_context(self) -> Mapping[str, Any]:
+        context = dict()
+        context['Files'] = list()
+        context['Directories'] = list()
 
+        for target in self.file_context.keys():
+            if os.path.isdir(target):
+                context['Directories'].append(target)
+            elif os.path.isfile(target):
+                context['Files'].append(target)
+        
+        context.update(self.file_context)
+        return context
 
     def build_htmls(self):
         self.fs.ensure_built()
         for _ in self.fs.walk(hook=self._walk_hook):
             pass
 
-        assert len(self.template_dict) == 3 and len(self.file_context.items()) > 0
+        context = self._build_context()
 
-        # The dict of html rendering result whose key is the HTML files' name and the value is rendering result. The
-        # result is in the form of Template object.
-        file_dict = dict()
-
-        for filename, file_context in self.file_context.items():
-            if filename.startswith('f'):
-                file_dict[filename] = Template(self.template_dict['file.html'], file_context)
-            elif filename.startswith('d'):
-                file_dict[filename] = Template(self.template_dict['directory.html'], file_context)
-            else:
-                self.logger.warning('Unexpected filename')
-
-        for filename, template in file_dict.items():
-            fileutils.write_file(os.path.join(self.root_dir, filename), template.render())
+        template = Template(self.template_dict['index.html'], context)
+        fileutils.write_file(os.path.join(self.root_dir, 'index.html'), template.render())
 
     def report(self):
         pass

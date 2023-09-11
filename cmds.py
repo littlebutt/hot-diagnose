@@ -17,7 +17,6 @@ class Cmd:
     
         -s --source: the source script file
         -o --output: redirect path for source file output
-        -d --display: specify the display manner, default html
         -p --path: specify a path that all files in the path should be included. 
                    It is necessary if the source is in a package
         -h --help: help message
@@ -25,8 +24,8 @@ class Cmd:
 
     def parse(self):
         opts, args = getopt.getopt(sys.argv[1:],
-                                   's:d:o:p:h',
-                                   ['source=', 'display', 'output', 'path', 'help'])
+                                   's:o:p:h',
+                                   ['source=', 'output', 'path', 'help'])
 
         if any(opt in ['-h', '--help'] for opt, optarg in opts):
             print(self.usage)
@@ -55,6 +54,8 @@ class Cmd:
             scope_plugin.set_scope_funcs(_funcs)
 
         source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
+        assert len(source) == 1
+        source = source[0]
 
         scope_path = None
         if scope_paths is not None:
