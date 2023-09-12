@@ -59,6 +59,7 @@ class Pipeline:
         self.fs.build()
         self.reporter.prepare()
         self.reporter.build_htmls()
+        self.reporter.report()
         self.dispatcher.add_callable(self.do_process)
         self.dispatcher.add_callable(self.do_server)
 

@@ -26,6 +26,9 @@ class Line:
     def __str__(self):
         return self.content
 
+    def __hash__(self):
+        return hash(self.content) + hash(self.lineno)
+
 
 @dataclass
 class File:
@@ -40,6 +43,12 @@ class File:
     def __str__(self):
         return ''.join([line.content for line in self.lines])
 
+    def __hash__(self):
+        base = hash(self.filename)
+        for line in self.lines:
+            base += hash(line)
+        return base
+
 
 @dataclass
 class Directory:
@@ -51,3 +60,9 @@ class Directory:
 
     def __str__(self):
         return self.__repr__()
+
+    def __hash__(self):
+        base = hash(self.dirname)
+        for target in self.files_or_directories:
+            base += hash(target)
+        return base

@@ -6,6 +6,8 @@ from server.base import RenderServer
 if __name__ == '__main__':
     cmd = Cmd()
     cmd.parse()
-    # server端消费者
+    # 渲染引擎escape
     # html实现前端
-    # html模板渲染
+    # pluginmanager
+    # scope提出来
+

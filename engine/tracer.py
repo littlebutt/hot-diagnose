@@ -32,8 +32,11 @@ class Tracer:
         return cb.__qualname__.split('.')[0]
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
+        from engine.pipeline import Pipeline
+        sp = Pipeline.get_plugin('ScopePlugin')
         if frame.f_code.co_filename in THIS_FILE \
-                or self._is_inner_module(frame.f_code.co_filename):
+                or self._is_inner_module(frame.f_code.co_filename) \
+                or sp.tracer_callback(frame, event, args) == 'False':
             return None
         cb_rt = []
         if self.callbacks is not None:

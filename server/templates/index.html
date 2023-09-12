@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <title>hot-diagnose</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/styles/default.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/highlight.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/languages/go.min.js"></script>
 </head>
 <body>
     <div class="flex flex-row">
@@ -13,11 +17,20 @@
             <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Hot Diagnose</span>
             <br>
             <br>
-            {% for d in Files %}
-                <div>test</div>
+            <pre>
+            <code>
+            {% for f in Files %}
+                <div class="{{f.__hash__}}">
+                    {% for l in f.lines %}
+                    <div class="{{l.__hash__}}">{{l.lineno}}:{{l.content}}</div>
+                    {% endfor %}
+                </div>
             {% endfor %}
+            </code>
+            </pre>
         </div>
         <div class="basis-1/12"></div>
     </div>
+<script>hljs.highlightAll();</script>
 </body>
 </html>
