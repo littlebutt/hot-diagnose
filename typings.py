@@ -37,21 +37,17 @@ T_tracer_callback_func = Callable[[T_frame, T_event, Any], str]
 
 class TPlugin(Protocol):
 
+    def __init__(self, *args, **kwargs):
+        pass
+
     def on_preprocess(self, *args, **kwargs):
         pass
 
     def on_postprocess(self, *args, **kwargs):
         pass
 
-    def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Optional[str]:
+    def tracer_callback(self, frame: T_frame, event: T_event, args: Any) -> Any:
         pass
-
-
-class TMessageEntry(type):
-    id: int
-    filename: str
-    lineno: int
-    cb_rts: str
 
 
 LoggerLike = TypeVar('LoggerLike', bound=logging.Logger)

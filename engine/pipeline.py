@@ -1,4 +1,4 @@
-from typing import List, Optional, ClassVar, Dict
+from typing import List, Optional
 
 from engine.dispatch import Dispatcher
 from engine.report import Reporter
@@ -7,11 +7,11 @@ from fs.base import FS
 from fs import Path
 from logs import Logger
 from server import RenderServer
-from typings import TPlugin, Pair, LoggerLike
+from typings import LoggerLike
+from engine.manage import PluginManager
 
 
 class Pipeline:
-    plugins: ClassVar[Dict[str, Pair[TPlugin, bool]]] = dict()
 
     def __init__(self,
                  source: str,
@@ -45,8 +45,8 @@ class Pipeline:
 
         runner = PyRunner(source=self.source,
                           args=self.args,
-                          tracer_callbacks=[p[0].tracer_callback for _, p in Pipeline.plugins.items()
-                                            if p[1] and hasattr(p[0], 'tracer_callback')],
+                          tracer_callbacks=[p.plugin.tracer_callback for _, p in PluginManager.plugins.items()
+                                            if p.plugin and hasattr(p.plugin, 'tracer_callback')],
                           logger=self.logger)
         runner.run()
         Pipeline.do_postprocess()
@@ -65,44 +65,19 @@ class Pipeline:
 
     @classmethod
     def do_preprocess(cls):
-        for key, (plugin, enabled) in cls.plugins.items():
-            if enabled:
-                assert hasattr(plugin, 'on_preprocess')
-                plugin.on_preprocess()
+        for name, disc in PluginManager.plugins.items():
+            if disc.enable:
+                assert hasattr(disc.plugin, 'on_preprocess')
+                disc.plugin.on_preprocess()
 
     @classmethod
     def do_postprocess(cls):
-        for key, (plugin, enabled) in cls.plugins.items():
-            if enabled:
-                assert hasattr(plugin, 'on_postprocess')
-                plugin.on_postprocess()
+        for name, disc in PluginManager.plugins.items():
+            if disc.enable:
+                assert hasattr(disc.plugin, 'on_postprocess')
+                disc.plugin.on_postprocess()
 
     def run(self):
         self.prepare()
         self.dispatcher.dispatch()
-
-    @classmethod
-    def add_plugin(cls, enabled: bool = False):
-        def _inner(plugin_cls: type(TPlugin)):
-            plugin = plugin_cls()
-            cls.plugins[plugin_cls.__name__] = ([plugin, enabled])
-        return _inner
-
-    @classmethod
-    def enable_plugin(cls, plugin_cls_name: str) -> None:
-        for _key, (_plugin, _enable) in cls.plugins.items():
-            if _key == plugin_cls_name:
-                cls.plugins[_key][1] = True
-                return
-        Logger.get_logger('engine.pipeline')\
-            .warning(f"Cannot find target plugin {plugin_cls_name}")
-
-    @classmethod
-    def get_plugin(cls, plugin_cls_name: str) -> Optional[TPlugin]:
-        for _key, (_plugin, _enable)  in cls.plugins.items():
-            if _key == plugin_cls_name:
-                return _plugin
-        Logger.get_logger('engine')\
-            .warning(f"Cannot find target plugin {plugin_cls_name}")
-        return None
 

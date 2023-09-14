@@ -3,9 +3,8 @@ import os.path
 import sys
 
 from engine import Pipeline
+from engine.manage import PluginManager
 from logs import Logger
-from plugins import RedirectPlugin
-from plugins import ScopePlugin
 
 
 class Cmd:
@@ -31,19 +30,21 @@ class Cmd:
             print(self.usage)
             sys.exit()
 
+        PluginManager.load_plugins(['plugins'])
+
         if any(opt in ['-o', '--output'] for opt, optarg in opts):
             output = [optarg for opt, optarg in opts if opt in ['-o', '--output']]
             if len(output) > 1:
                 raise RuntimeError("Cannot support multiple redirect output")
-            Pipeline.enable_plugin('RedirectPlugin')
-            redirect_plugin: RedirectPlugin = Pipeline.get_plugin('RedirectPlugin')
+            PluginManager.enable_plugin('RedirectPlugin')
+            redirect_plugin = PluginManager.get_plugin('RedirectPlugin')
             assert redirect_plugin is not None
-            redirect_plugin.set_out(output[0])
+            redirect_plugin.set_filename(output[0])
 
         scope_paths = None
         if any(opt in ['-p', '--path'] for opt, optarg in opts):
             scope_paths = [optarg for opt, optarg in opts if opt in ['-p', '--path']]
-            scope_plugin: ScopePlugin = Pipeline.get_plugin('ScopePlugin')
+            scope_plugin = PluginManager.get_plugin('ScopePlugin')
             assert scope_plugin is not None
             _funcs = []
             for path in scope_paths:

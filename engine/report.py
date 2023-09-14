@@ -62,6 +62,10 @@ class Reporter:
         for _ in self.fs.walk(hook=self._walk_hook):
             pass
 
+        def format(line: str):
+            return line.replace(" ", "&nbsp;")
+        self.template_context.update({'format': format})
+
         template = Template(self.template_dict['index.html'], self.template_context)
         fileutils.write_file(os.path.join(self.root_dir, 'index.html'), template.render())
 

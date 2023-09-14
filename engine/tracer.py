@@ -3,6 +3,7 @@ import re
 import sys
 from typing import Any, cast, Optional, List, Callable
 
+from engine.manage import PluginManager
 from queues import TraceMessageEntry, Q
 from typings import T_frame, T_event, T_tracefunc, T_tracer_callback_func, \
     LoggerLike
@@ -32,8 +33,7 @@ class Tracer:
         return cb.__qualname__.split('.')[0]
 
     def _trace_func(self, frame: T_frame, event: T_event, args: Any):
-        from engine.pipeline import Pipeline
-        sp = Pipeline.get_plugin('ScopePlugin')
+        sp = PluginManager.get_plugin('ScopePlugin')
         if frame.f_code.co_filename in THIS_FILE \
                 or self._is_inner_module(frame.f_code.co_filename) \
                 or sp.tracer_callback(frame, event, args) == 'False':
