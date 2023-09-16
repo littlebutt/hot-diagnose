@@ -211,6 +211,9 @@ class Template:
             for func in pipes[1:]:
                 self._variable(func, self.all_vars)
                 code = "c_%s(%s)" % (func, code)
+        elif expr.startswith("~"):
+            expr = expr.lstrip("~")
+            code = "not %s" % self._expr_code(expr)
         elif "." in expr:
             dots = expr.split(".")
             code = self._expr_code(dots[0])

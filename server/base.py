@@ -4,7 +4,7 @@ from typing import Optional, Union, Sequence
 
 from logs import Logger
 from queues import Q
-from server.parse import parse_to_action, parse_from_trace
+from server.parse import parse_from_trace
 from server.ws import serve, Websocket
 
 from typings import LoggerLike
@@ -33,8 +33,6 @@ class RenderServer:
         async def _ws_handler(ws: Websocket):
             for _message in Q:
                 await ws.send(parse_from_trace(_message))
-            async for message in ws:
-                Q.put(parse_to_action(message))
 
         self.serve = functools.partial(serve,
                                        ws_handler=_ws_handler,

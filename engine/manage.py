@@ -20,6 +20,8 @@ class PluginManager:
     @classmethod
     def add_plugin(cls, enabled: bool = False, *args, **kwargs):
         def _inner(plugin_cls: Type['TPlugin']):
+            if plugin_cls.__name__ in cls.plugins.keys():
+                raise RuntimeError(f"The plugin {plugin_cls.__name__} is duplicated")
             plugin = plugin_cls(*args, **kwargs)
             cls.plugins[plugin_cls.__name__] = PluginDescriptor(enable=enabled, plugin=plugin)
 

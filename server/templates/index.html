@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <title>hot-diagnose</title>
+    <link rel="stylesheet" href="index.css" type="text/css">
 </head>
 <body>
     <div class="flex flex-row">
@@ -13,15 +14,32 @@
             <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Hot Diagnose</span>
             <br>
             <br>
-            <code>
-            {% for f in Files %}
-                <div class="{{f.__hash__}}">
-                    {% for l in f.lines %}
-                    <div class="{{l.__hash__}}">{{l.lineno}}:{{l.content|format}}</div>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-            </code>
+            {% if ~Directories.__len__ %}
+                {% for f in Files %}
+                    <div class="{{f.__hash__}}">
+                        <code>
+                        {% for l in f.lines %}
+                        <div class="{{l.__hash__}}">{{l.lineno}}:{{l.content|escape}}</div>
+                        {% endfor %}
+                        </code>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% if Directories.__len__ %}
+                {% for f in Files %}
+                    <div class="{{f.__hash__}} invisible">
+                        <code>
+                        {% for l in f.lines %}
+                        <div class="{{l.__hash__}}">{{l.lineno}}:{{l.content|escape}}</div>
+                        {% endfor %}
+                        </code>
+                    </div>
+                {% endfor %}
+                {% for d in Directories%}
+                    {%%}
+                {% endfor %}
+            {% endif %}
+
         </div>
         <div class="basis-1/12"></div>
     </div>
