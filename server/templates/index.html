@@ -24,8 +24,7 @@
                         </code>
                     </div>
                 {% endfor %}
-            {% endif %}
-            {% if Directories.__len__ %}
+            {% else %}
                 {% for f in Files %}
                     <div class="{{f.__hash__}} invisible">
                         <code>
@@ -36,7 +35,6 @@
                     </div>
                 {% endfor %}
                 {% for d in Directories%}
-                    {%%}
                 {% endfor %}
             {% endif %}
 

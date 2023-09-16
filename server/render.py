@@ -149,6 +149,22 @@ class Template:
                     ops_stack.append('if')
                     code.add_line("if %s:" % self._expr_code(words[1]))
                     code.indent()
+                elif words[0] == 'elif':
+                    if ops_stack[-1] != 'if':
+                        self._syntax_error("Missmatched elif", token)
+                    else:
+                        code.dedent()
+                    if len(words) != 2:
+                        self._syntax_error("Don't understand elif", token)
+                    code.add_line("elif %s:" % self._expr_code(words[1]))
+                    code.indent()
+                elif words[0] == 'else':
+                    if ops_stack[-1] != 'if':
+                        self._syntax_error("Missmatched else", token)
+                    else:
+                        code.dedent()
+                    code.add_line("else:")
+                    code.indent()
                 elif words[0] == 'for':
                     # A loop: iterate over expression result.
                     if len(words) != 4 or words[2] != 'in':

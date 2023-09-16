@@ -1,4 +1,3 @@
-import functools
 import os
 import re
 from os import PathLike
@@ -8,6 +7,9 @@ import fileutils
 from logs import Logger
 from fs.models import Directory, File, Line
 from typings import LoggerLike
+
+
+IS_PYCACHE = lambda d: d.endswith('__pycache__')
 
 
 class FS:
@@ -92,7 +94,7 @@ class FS:
         try:
             for info in os.listdir(path):
                 yield path, info
-        except Exception:
+        except OSError:
             self.logger.error(f'Fail to walk path {path}', exc_info=True)
             return None
 
@@ -100,13 +102,15 @@ class FS:
         assert os.path.isabs(file)
         file = os.fspath(file)
         _, ext = os.path.splitext(file)
-        content = []
+        content = list()
         if ext == '.py' or ext == '.pyw':
             for (lineno, line) in fileutils.read_source_py_with_line(file):
                 content.append(Line(lineno=lineno, content=str(line, encoding='UTF-8')))
         else:
-            # TODO: ext == '.html'
-            content.append(Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8')))
+            try:
+                content.append(Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8')))
+            except UnicodeDecodeError:
+                self.logger.warning(f"Fail to inspect file {file}, which may be a binary file", exc_info=True)
         return ext, content
 
     def build(self):
@@ -117,9 +121,6 @@ class FS:
             fs.build('..')
 
         The method must be called before :meth:`walk` and :meth:`find`
-
-        Args:
-            root_dir: the given directory
 
         Returns:
             None
@@ -142,7 +143,7 @@ class FS:
                 # XXX: Store the relative path for a while.
                 _short_d = _d
                 _d = os.path.join(_p, _d)
-                if os.path.isdir(_d):
+                if os.path.isdir(_d) and not IS_PYCACHE(_d):
                     self.logger.info(f"FS.build: Scanning the directory {_d}")
                     # Exclude the directories in `exclude_dirs`
                     if any([self.match(pattern, _d)
@@ -277,6 +278,7 @@ class FS:
                 yield from self._walk(res, hook=hook)
         else:
             yield from self._walk(self.root, hook=hook)
+
 
 if __name__ == '__main__':
     fs = FS('.')

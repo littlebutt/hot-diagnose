@@ -3,12 +3,11 @@ import ntpath
 import os.path
 import pathlib
 import re
-import sys
 from os import PathLike
-from typing import Tuple, Dict, List
+from typing import Tuple
 
 
-def read_source_py(filename: str) -> bytes: # also for pyw
+def read_source_py(filename: str) -> bytes:  # also for pyw
     filename_base, filename_ext = os.path.splitext(filename)
     assert filename_ext == '.py' or filename_ext == '.pyw'
     if not os.path.exists(filename):

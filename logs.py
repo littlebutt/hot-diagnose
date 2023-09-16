@@ -6,7 +6,7 @@ from typing import ClassVar, Optional
 
 __all__ = ['Logger']
 
-from typings import LoggerLike
+#from typings import LoggerLike
 
 
 class Logger(logging.Logger):
@@ -53,7 +53,7 @@ class Logger(logging.Logger):
     @staticmethod
     def redirect_to_file(filename: PathLike,
                          mode: str = 'a',
-                         logger: Optional[LoggerLike] = None):
+                         logger: Optional['LoggerLike'] = None):
         """
         Redirect the output stream of :class:`Logger` to a file.
 

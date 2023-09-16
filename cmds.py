@@ -10,15 +10,15 @@ from logs import Logger
 class Cmd:
 
     usage = '''
-    Usages: hot-cov [OPTIONS] [OPTION_ARGS] FILENAME [ARGS]
+    Usages: hot-diagnose [OPTIONS] [OPTION_ARGS] [SOURCE_ARGS]
     
     Options:
     
-        -s --source: the source script file
-        -o --output: redirect path for source file output
-        -p --path: specify a path that all files in the path should be included. 
-                   It is necessary if the source is in a package
-        -h --help: help message
+        -s --source: The source file to execute. If the source file needs arguments, they can be append to the tail.
+        -o --output: The path to the output file of the executing source file.
+        -p --path:   The directory path that all files in the path will be rendered as output. If not provided, the
+                     path to the source file will be set as default. Usually, it will also regard as PYTHONPATH.
+        -h --help:   The help message.
     '''
 
     def parse(self):
@@ -30,6 +30,10 @@ class Cmd:
             print(self.usage)
             sys.exit()
 
+        source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
+        assert len(source) == 1
+        source = source[0]
+
         PluginManager.load_plugins(['plugins'])
 
         if any(opt in ['-o', '--output'] for opt, optarg in opts):
@@ -38,30 +42,25 @@ class Cmd:
                 raise RuntimeError("Cannot support multiple redirect output")
             PluginManager.enable_plugin('RedirectPlugin')
             redirect_plugin = PluginManager.get_plugin('RedirectPlugin')
-            assert redirect_plugin is not None
             redirect_plugin.set_filename(output[0])
 
-        scope_paths = None
         if any(opt in ['-p', '--path'] for opt, optarg in opts):
             scope_paths = [optarg for opt, optarg in opts if opt in ['-p', '--path']]
-            scope_plugin = PluginManager.get_plugin('ScopePlugin')
-            assert scope_plugin is not None
-            _funcs = []
-            for path in scope_paths:
-                if not os.path.isabs(path):
-                    path = os.path.abspath(path)
-                sys.path.append(path)
-                _funcs.append(lambda p: p.startswith(path))
-            scope_plugin.set_scope_funcs(_funcs)
+        else:
+            scope_paths = [source]
+
+        scope_plugin = PluginManager.get_plugin('ScopePlugin')
+        _funcs = []
+        for path in scope_paths:
+            if not os.path.isabs(path):
+                path = os.path.abspath(path)
+            sys.path.append(path)
+            _funcs.append(lambda p: p.startswith(path))
+        scope_plugin.set_scope_funcs(_funcs)
 
         source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
         assert len(source) == 1
         source = source[0]
 
-        scope_path = None
-        if scope_paths is not None:
-            if len(scope_paths) > 1:
-                Logger.get_logger('cmds').warning("Only support single scope path")
-            scope_path = scope_paths[0]
-        pipeline = Pipeline(source, args, scope_path)
+        pipeline = Pipeline(source, args, scope_paths[0])
         pipeline.run()
