@@ -4,7 +4,6 @@ import sys
 
 from engine import Pipeline
 from engine.manage import PluginManager
-from logs import Logger
 
 
 class Cmd:

@@ -2,7 +2,7 @@ import json
 import os.path
 import re
 import sys
-from typing import Any, cast, Optional, List, Callable
+from typing import Any, cast, Optional, List
 
 from engine.manage import PluginManager
 from queues import TraceMessageEntry, Q

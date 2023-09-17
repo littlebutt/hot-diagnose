@@ -17,5 +17,4 @@ class Dispatcher:
     def dispatch(self):
         with self.pool_executor as executor:
             for cb in self.callable_group:
-                self.future_map.update({cb.__name__:
-                                        executor.submit(cb)})
+                self.future_map.update({cb.__name__: executor.submit(cb)})
