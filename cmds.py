@@ -17,7 +17,8 @@ class Cmd:
         -s --source: The source file to execute. If the source file needs arguments, they can be append to the tail.
         -o --output: The path to the output file of the executing source file.
         -p --path:   The directory path that all files in the path will be rendered as output. If not provided, the
-                     path to the source file will be set as default. Usually, it will also regard as PYTHONPATH.
+                     path to the source file and its directory will be set as default. Usually, it will also regard as
+                     PYTHONPATH.
         -h --help:   The help message.
     '''
 
@@ -47,7 +48,7 @@ class Cmd:
         if any(opt in ['-p', '--path'] for opt, optarg in opts):
             scope_paths = [optarg for opt, optarg in opts if opt in ['-p', '--path']]
         else:
-            scope_paths = [source]
+            scope_paths = [source, os.path.dirname(source)]
 
         scope_plugin = PluginManager.get_plugin('ScopePlugin')
         _funcs = []
@@ -57,10 +58,6 @@ class Cmd:
             sys.path.append(path)
             _funcs.append(lambda p: p.startswith(path))
         scope_plugin.set_scope_funcs(_funcs)
-
-        source = [optarg for opt, optarg in opts if opt in ['-s', '--source']]
-        assert len(source) == 1
-        source = source[0]
 
         pipeline = Pipeline(source, args, scope_paths[0])
         pipeline.run()

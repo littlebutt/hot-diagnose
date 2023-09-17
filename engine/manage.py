@@ -8,13 +8,14 @@ from typings import TPlugin
 
 @dataclass
 class PluginDescriptor:
-
     enable: bool = field(default=False)
     plugin: TPlugin = field(default=None)
 
+    def __repr__(self):
+        return f'<PluginDescriptor enable={self.enable}> plugin={self.plugin.__name__}>'
+
 
 class PluginManager:
-
     plugins: ClassVar[Dict[str, PluginDescriptor]] = dict()
 
     @classmethod

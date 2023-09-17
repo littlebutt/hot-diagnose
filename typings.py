@@ -17,21 +17,6 @@ T_frame = FrameType
 T_tracefunc = Callable[[FrameType, str, Any], Callable[[FrameType, str, Any], Any] | None]
 
 
-class TRunner(Protocol):
-
-    def run(self):
-        pass
-
-    def _build_module(self, source: str) -> ModuleType:
-        pass
-
-
-T_pre_process_hook_func = Callable[..., None]
-
-
-T_post_process_hook_func = Callable[..., None]
-
-
 T_tracer_callback_func = Callable[[T_frame, T_event, Any], str]
 
 

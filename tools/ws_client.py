@@ -4,6 +4,7 @@ from websockets import connect
 
 async def make_conn(uri):
     async with connect(uri) as websocket:
+        await websocket.send('start')
         while True:
             res = await websocket.recv()
             print(str(res))

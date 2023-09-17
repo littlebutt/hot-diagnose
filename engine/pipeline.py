@@ -3,7 +3,7 @@ from typing import List, Optional
 from engine.dispatch import Dispatcher
 from engine.report import Reporter
 from engine.run import PyRunner
-from fs.base import FS
+from fs import FS
 from fs import Path
 from logs import Logger
 from server import RenderServer
@@ -80,4 +80,3 @@ class Pipeline:
     def run(self):
         self.prepare()
         self.dispatcher.dispatch()
-

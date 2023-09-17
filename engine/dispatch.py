@@ -6,8 +6,7 @@ from typing import Callable, Any, Dict
 class Dispatcher:
 
     def __init__(self,
-                 max_workers: int = 2,
-                 **kwargs):
+                 max_workers: int = 2,):
         self.pool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         self.callable_group = list()
         self.future_map: Dict[str, Future] = dict()
@@ -19,6 +18,4 @@ class Dispatcher:
         with self.pool_executor as executor:
             for cb in self.callable_group:
                 self.future_map.update({cb.__name__:
-                                            executor.submit(cb)})
-
-
+                                        executor.submit(cb)})

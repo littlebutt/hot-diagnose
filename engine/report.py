@@ -66,7 +66,7 @@ class Reporter:
 
         template = Template(self.template_dict['index.html'], self.template_context)
         fileutils.write_file(os.path.join(self.root_dir, 'index.html'), template.render())
-        fileutils.write_file(os.path.join(self.root_dir, 'index.css'),self.template_dict['index.css'])
+        fileutils.write_file(os.path.join(self.root_dir, 'index.css'), self.template_dict['index.css'])
 
     def report(self):
         import webbrowser
@@ -75,4 +75,3 @@ class Reporter:
 
 def escape(line: str):
     return line.replace("&", "&amp;").replace(" ", "&nbsp;").replace("<", "&lt;")
-

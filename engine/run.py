@@ -5,7 +5,7 @@ from types import ModuleType
 
 from fileutils import read_source_py
 from engine.tracer import Tracer
-from typings import TRunner, T_tracer_callback_func, LoggerLike
+from typings import T_tracer_callback_func, LoggerLike
 
 __all__ = ['PyRunner']
 
@@ -19,7 +19,7 @@ class DummyLoader:
         self.fullname = fullname
 
 
-class PyRunner(TRunner):
+class PyRunner:
     """
     The :class:`PyRunner` is for running Python script or package from the
     cammand line.
@@ -91,14 +91,17 @@ class PyRunner(TRunner):
         self._build_args(args, source)
         try:
             code = compile(source_byte, source, "exec", dont_inherit=True)
-        except Exception:
-            self.logger.error(f"Fail to compile code: {source}", exc_info=True)
+        except SyntaxError:
+            self.logger.error(f"Fail to compile the code: {source} due to the syntax error", exc_info=True)
+            return
+        except ValueError:
+            self.logger.error(f"Fail to compile the code: {source} due to the inner null value", exc_info=True)
             return
         tracer = Tracer(self.tracer_callbacks, logger=self.logger)
         tracer.start()
         try:
             exec(code, mod.__dict__)
-        except Exception:
+        except RuntimeError:
             self.logger.error(f"Fail to execute code: {source}", exc_info=True)
         finally:
             tracer.stop()
