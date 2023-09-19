@@ -71,3 +71,9 @@ def write_file(filename: str, content: str | bytes):
     content = re.sub(r"(\A\s+)|(\s+$)", "", content, flags=re.MULTILINE) + "\n"
     with open(filename, "wb") as fout:
         fout.write(content.encode("ascii", "xmlcharrefreplace"))
+
+
+def generate_classname(full_pathname: str, lineno: int):
+    assert os.path.isabs(full_pathname) and isinstance(lineno, int)
+    return hash(full_pathname) + hash(lineno)
+

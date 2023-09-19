@@ -14,6 +14,7 @@
             <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Hot Diagnose</span>
             <br>
             <br>
+            <button id="control"></button>
             {% if ~Directories.__len__ %}
                 {% for f in Files %}
                     <div class="{{f.__hash__}}">
@@ -41,5 +42,6 @@
         </div>
         <div class="basis-1/12"></div>
     </div>
+<script src="control.js"></script>
 </body>
 </html>

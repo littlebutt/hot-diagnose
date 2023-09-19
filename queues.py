@@ -21,6 +21,7 @@ class TraceMessageEntry(MessageEntry):
     id: int
     filename: str
     lineno: int
+    classsname: int
     cb_rts: str
     type: str = field(default='TraceMessage')
 

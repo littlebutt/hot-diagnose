@@ -4,6 +4,7 @@ import re
 import sys
 from typing import Any, cast, Optional, List
 
+import fileutils
 from engine.manage import PluginManager
 from queues import TraceMessageEntry, Q
 from typings import T_frame, T_event, T_tracefunc, T_tracer_callback_func, LoggerLike
@@ -41,7 +42,7 @@ class Tracer:
                          f"lineno: {frame.f_lineno}, cb_rt: {json.dumps(cb_rt)}")
         Q.put(TraceMessageEntry(0,
                                 self._mangle_path(frame.f_code.co_filename),
-                                frame.f_lineno, cb_rt))
+                                frame.f_lineno, self.line_hash(frame),cb_rt))
         return self._trace_func
 
     def start(self):
@@ -56,3 +57,6 @@ class Tracer:
     def stop(self):
         sys.settrace(None)
         self.logger.info("Trace function is unamounted")
+
+    def line_hash(self, frame: T_frame):
+        return fileutils.generate_classname(os.path.abspath(frame.f_code.co_filename), int(frame.f_lineno) + 1)

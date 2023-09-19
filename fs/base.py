@@ -105,10 +105,10 @@ class FS:
         content = list()
         if ext == '.py' or ext == '.pyw':
             for (lineno, line) in fileutils.read_source_py_with_line(file):
-                content.append(Line(lineno=lineno, content=str(line, encoding='UTF-8')))
+                content.append(Line(lineno=lineno, content=str(line, encoding='UTF-8'), filename=file))
         else:
             try:
-                content.append(Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8')))
+                content.append(Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8'), filename=file))
             except UnicodeDecodeError:
                 self.logger.warning(f"Fail to inspect file {file}, which may be a binary file", exc_info=True)
         return ext, content

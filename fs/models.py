@@ -6,6 +6,8 @@ from typing import List, Union, Any
 
 __all__ = ['Path', 'Line', 'File', 'Directory']
 
+import fileutils
+
 
 @dataclass
 class Path(PathLike, ABC):
@@ -17,17 +19,18 @@ class Path(PathLike, ABC):
 
 @dataclass
 class Line:
+    filename: str  # abs filename
     content: str
     lineno: int
 
     def __repr__(self):
-        return f'<Line content={self.content} lineno={self.lineno}>'
+        return f'<Line content={self.content} lineno={self.lineno} filename={self.filename}>'
 
     def __str__(self):
         return self.content
 
     def __hash__(self):
-        return hash(self.content) + hash(self.lineno)
+        return fileutils.generate_classname(self.filename, self.lineno)
 
 
 @dataclass
