@@ -30,6 +30,17 @@ class Line:
         return self.content
 
     def __hash__(self):
+        """
+        Generate the hash of the :class:`Line`.
+
+        The hash can be used as the classname of the element for a line in code when rendered in the HTML file. Note
+        that this magic method :meth:`__hash__` will return a string as a hash rather than an int.
+
+        Returns:
+            str: The hash of the :class:`line`.
+        """
+
+        # XXX: Hack to the megic method __hash__ and make it returns a string rather than an int.
         return fileutils.generate_classname(self.filename, self.lineno)
 
 
@@ -47,10 +58,8 @@ class File:
         return ''.join([line.content for line in self.lines])
 
     def __hash__(self):
-        base = hash(self.filename)
-        for line in self.lines:
-            base += hash(line)
-        return base
+        hash(self.filename)
+        return hash(self.filename)
 
 
 @dataclass

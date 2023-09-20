@@ -73,7 +73,10 @@ def write_file(filename: str, content: str | bytes):
         fout.write(content.encode("ascii", "xmlcharrefreplace"))
 
 
-def generate_classname(full_pathname: str, lineno: int):
+def generate_classname(full_pathname: str, lineno: int = 0):
     assert os.path.isabs(full_pathname) and isinstance(lineno, int)
-    return hash(full_pathname) + hash(lineno)
+    if os.path.isdir(full_pathname):
+        return hashlib.new('sha3_256', full_pathname.encode('UTF-8')).hexdigest()[:16]
+    elif os.path.isfile(full_pathname):
+        return hashlib.new('sha3_256', f'{full_pathname}:{lineno}'.encode('UTF-8')).hexdigest()[:16]
 

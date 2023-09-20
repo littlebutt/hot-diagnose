@@ -59,4 +59,4 @@ class Tracer:
         self.logger.info("Trace function is unamounted")
 
     def line_hash(self, frame: T_frame):
-        return fileutils.generate_classname(os.path.abspath(frame.f_code.co_filename), int(frame.f_lineno) + 1)
+        return fileutils.generate_classname(os.path.abspath(frame.f_code.co_filename), int(frame.f_lineno))

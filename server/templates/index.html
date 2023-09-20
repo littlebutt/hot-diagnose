@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
     <title>hot-diagnose</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="index.css" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12/dist/gsap.min.js"></script>
 </head>
 <body>
     <div class="flex flex-row">
@@ -20,7 +21,7 @@
                     <div class="{{f.__hash__}}">
                         <code>
                         {% for l in f.lines %}
-                        <div class="{{l.__hash__}}">{{l.lineno}}:{{l.content|escape}}</div>
+                        <div class="{{l.__hash__}}" style="background-color: rgb(255, 255, 255)">{{l.lineno}}:{{l.content|escape}}</div>
                         {% endfor %}
                         </code>
                     </div>
@@ -30,7 +31,7 @@
                     <div class="{{f.__hash__}} invisible">
                         <code>
                         {% for l in f.lines %}
-                        <div class="{{l.__hash__}}">{{l.lineno}}:{{l.content|escape}}</div>
+                        <div class="{{l.__hash__}}" style="background-color: rgb(255, 255, 255)">{{l.lineno}}:{{l.content|escape}}</div>
                         {% endfor %}
                         </code>
                     </div>

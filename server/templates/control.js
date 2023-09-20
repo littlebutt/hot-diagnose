@@ -12,17 +12,26 @@ class Controller {
     }
 
     peak() {
-        return this.queue.pop()
+        return this.queue.shift()
+    }
+
+    _blink_line(classname) {
+        let target = document.getElementsByClassName(classname)[0]
+        let bgc = target.style.backgroundColor
+        let rgb = bgc.replace(/^rgba?\(|\s+|\)$/g,'').split(',');
+        window.scrollTo(0, target.offsetTop - 500)
+        gsap.to(target, {scale: 2})
+        gsap.to(target, {scale: 1, backgroundColor: `rgb(255, ${rgb[1] - 10}, ${rgb[2] - 10})`})
     }
 
     do_start() {
         const render = () => {
             let data = this.peak()
             console.log(data)
-            document.getElementsByClassName(data.classname)[0].innerHTML = '+'
+            window.ctrl._blink_line(data.classname)
         }
         this.send('start')
-        this.timmer = setInterval(render, 1000)
+        this.timmer = setInterval(render, 500)
     }
 
     do_stop() {
