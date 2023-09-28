@@ -1,5 +1,7 @@
+import os.path
 from typing import List, Optional
 
+import fileutils
 from engine.dispatch import Dispatcher
 from engine.report import Reporter
 from engine.run import PyRunner
@@ -37,7 +39,7 @@ class Pipeline:
                      exclude_file=self.exclude_file)
         self.dispatcher = Dispatcher(max_workers=max_workers)
         self.render_server = RenderServer(hostname=server_hostname, port=port)
-        self.reporter = Reporter(self.fs, './server/templates', logger=self.logger)
+        self.reporter = Reporter(self.fs, os.path.join(fileutils.get_package_dir(), f'server{os.path.sep}templates'), logger=self.logger)
 
     def do_process(self):
         Pipeline.do_preprocess()
@@ -56,7 +58,6 @@ class Pipeline:
         self.render_server.run()
 
     def prepare(self):
-        self.fs.build()
         self.reporter.prepare()
         self.reporter.build_htmls()
         self.reporter.report()

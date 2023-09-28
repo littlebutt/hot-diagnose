@@ -37,26 +37,12 @@ def read_source_py_with_line(filename: str) -> Tuple[int, str]:
             yield lineno, line
 
 
-# Copied from https://github.com/nedbat/coveragepy
-def flat_filename(filename: PathLike | str):
-    filename = os.fspath(filename)
-    dirname, basename = ntpath.split(filename)
-    if dirname:
-        fp = hashlib.new('sha3_256', dirname.encode('UTF-8')).hexdigest()[:16]
-        prefix = f'f_{fp}_'
-    else:
-        prefix = ''
-    return prefix + basename.replace('.', '_')
-
-
-def flat_dirname(dirname: PathLike | str):
-    dirname = os.fspath(dirname)
-    fp = hashlib.new('sha3_256', dirname.encode('UTF-8')).hexdigest()[:16]
-    return 'd_' + fp
-
-
 def get_home_dir() -> str:
     return str(pathlib.Path.home())
+
+
+def get_package_dir() -> str:
+    return __file__.rsplit(os.path.sep, 1)[0]
 
 
 def mkdir(location: PathLike | str, dirname: str):
@@ -80,3 +66,6 @@ def generate_classname(full_pathname: str, lineno: int = 0):
     elif os.path.isfile(full_pathname):
         return hashlib.new('sha3_256', f'{full_pathname}:{lineno}'.encode('UTF-8')).hexdigest()[:16]
 
+
+def file_maybe(filename: str, extension: str) -> bool:
+    return filename.endswith(extension)

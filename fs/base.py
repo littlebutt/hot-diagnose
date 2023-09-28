@@ -37,6 +37,12 @@ class FS:
         self.logger = logger
 
         self.root = None
+        self._is_single_file = True
+        self.build()
+
+    @property
+    def is_single_file(self):
+        return self._is_single_file
 
     # Copied from https://github.com/nedbat/coveragepy
     def _translate(self, pattern: str, case_sensitive=True):
@@ -108,7 +114,8 @@ class FS:
                 content.append(Line(lineno=lineno, content=str(line, encoding='UTF-8'), filename=file))
         else:
             try:
-                content.append(Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8'), filename=file))
+                content.append(
+                    Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8'), filename=file))
             except UnicodeDecodeError:
                 self.logger.warning(f"Fail to inspect file {file}, which may be a binary file", exc_info=True)
         return ext, content
@@ -130,7 +137,8 @@ class FS:
             f.extension, f.lines = self._inspect_file(self.path)
             self.root = f
             return f
-        self.root = Directory(dirname=self.path, files_or_directories=[])
+        self._is_single_file = False
+        self.root = Directory(dirname=self.path, basename=os.path.basename(self.path), files_or_directories=[])
         # The stack for memoizing Directory node. When a directory is found and its children nodes (sub-directory or
         # sub-file) are not scaned yet, it will be cached into the stack temporarily. Commonly, the nodes in the stack
         # for one time are in the same layer.
@@ -151,7 +159,7 @@ class FS:
                             for pattern in self.exclude_dirs]):
                         self.logger.info(f"FS.build: The directory {_d} is excluded")
                         continue
-                    _new_dir = Directory(dirname=_d, files_or_directories=[])
+                    _new_dir = Directory(dirname=_d, basename=_short_d, files_or_directories=[])
                     _dir.files_or_directories.append(_new_dir)
                     stack.append((_d, _new_dir))
                 elif os.path.isfile(_d):
@@ -168,10 +176,6 @@ class FS:
                 else:
                     self.logger.warning(f"FS.build: Unexpected target {_d}")
                     continue
-
-    def ensure_built(self):
-        if self.root is None:
-            raise RuntimeError("FS must be built before walking")
 
     def _walk(self, root_dir: Directory, hook: Callable[[File | Directory], Any]) -> Generator[File, Any, Any]:
         stack = [
@@ -214,7 +218,6 @@ class FS:
             RuntimeError: The object is neither :class:`File` nor :class:`Directory` RuntimeError: The :class:`FS` was
             not built.
         """
-        self.ensure_built()
         path = os.fspath(path)
         path = os.path.abspath(path)
         stack = [
@@ -266,7 +269,6 @@ class FS:
             RuntimeError: The :class:`FS` was not built
             RuntimeError: The given path is not found
         """
-        self.ensure_built()
         hook = self._wrap_hook(hook)
         if path is not None:
             res = self.find(path)
@@ -282,6 +284,5 @@ class FS:
 
 if __name__ == '__main__':
     fs = FS('.')
-    fs.build()
     for i in fs.walk():
         print(i)

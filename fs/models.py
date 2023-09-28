@@ -65,6 +65,7 @@ class File:
 @dataclass
 class Directory:
     dirname: PathLike | str
+    basename: str
     files_or_directories: List[Union['File', 'Directory']] = field(default_factory=list)
 
     def __repr__(self):

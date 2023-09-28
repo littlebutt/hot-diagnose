@@ -1,6 +1,6 @@
 import os
 from os import PathLike
-from typing import Optional, cast
+from typing import Optional, cast, List, Any
 
 import fileutils
 from fs import FS, File, Directory
@@ -37,7 +37,6 @@ class Reporter:
 
     def prepare(self):
         fs = FS(self.templates_dir, logger=self.logger)
-        fs.build()
 
         def _append_dict(target):
             if isinstance(target, File):
@@ -58,11 +57,13 @@ class Reporter:
             self.logger.warning(f"Unexpected file {target}")
 
     def build_htmls(self):
-        self.fs.ensure_built()
         for _ in self.fs.walk(hook=self._walk_hook):
             pass
 
-        self.template_context.update({'escape': escape, 'len': len})
+        self.template_context.update({'escape': escape, 'len': len, 'is_multiple': is_multiple})
+
+        if not self.fs.is_single_file:
+            self.template_context['Directories'].append(self.fs.root)
 
         template = Template(self.template_dict['index.html'], self.template_context)
         fileutils.write_file(os.path.join(self.root_dir, 'index.html'), template.render())
@@ -76,3 +77,7 @@ class Reporter:
 
 def escape(line: str):
     return line.replace("&", "&amp;").replace(" ", "&nbsp;").replace("<", "&lt;")
+
+
+def is_multiple(contents: List[Any]):
+    return len(contents) > 1

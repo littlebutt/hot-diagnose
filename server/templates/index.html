@@ -16,19 +16,29 @@
             <br>
             <br>
             <button id="control"></button>
-            {% if ~Directories.__len__ %}
-                {% for f in Files %}
-                    <div class="{{f.__hash__}}">
-                        <code>
-                        {% for l in f.lines %}
-                        <div class="{{l.__hash__}}" style="background-color: rgb(255, 255, 255)">{{l.lineno}}:{{l.content|escape}}</div>
+            {% if Directories %}
+                {% for d in Directories%}
+                <div class="{{d.__hash__}}">
+                    <p class="font-sans text-lg text-gray-800 text-center">{{d.basename}}</p>
+                    <table class="table-auto">
+                        <tbody>
+                        {% for content in d.files_or_directories %}
+<!--                        {# TODO: FIX HERE make them linkable! #}-->
+                            <tr>
+                                <td class="border px-4 py-2">{{content.basename}}</td>
+                                <td class="border px-4 py-2">Adam</td>
+                                <td class="border px-4 py-2">858</td>
+                            </tr>
                         {% endfor %}
-                        </code>
-                    </div>
+                        </tbody>
+                    </table>
+
+                </div>
                 {% endfor %}
             {% else %}
                 {% for f in Files %}
-                    <div class="{{f.__hash__}} invisible">
+                    <div class="{{f.__hash__}}">
+                        <p class="font-sans text-lg text-gray-800 text-center">{{f.basename}}</p>
                         <code>
                         {% for l in f.lines %}
                         <div class="{{l.__hash__}}" style="background-color: rgb(255, 255, 255)">{{l.lineno}}:{{l.content|escape}}</div>
@@ -36,8 +46,16 @@
                         </code>
                     </div>
                 {% endfor %}
-                {% for d in Directories%}
-                {% endfor %}
+<!--                {% for f in Files %}-->
+<!--                    <div class="{{f.__hash__}} invisible">-->
+<!--                        <code>-->
+<!--                        {% for l in f.lines %}-->
+<!--                        <div class="{{l.__hash__}}" style="background-color: rgb(255, 255, 255)">{{l.lineno}}:{{l.content|escape}}</div>-->
+<!--                        {% endfor %}-->
+<!--                        </code>-->
+<!--                    </div>-->
+<!--                {% endfor %}-->
+
             {% endif %}
 
         </div>
