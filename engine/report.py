@@ -62,9 +62,6 @@ class Reporter:
 
         self.template_context.update({'escape': escape, 'len': len, 'is_multiple': is_multiple})
 
-        if not self.fs.is_single_file:
-            self.template_context['Directories'].append(self.fs.root)
-
         template = Template(self.template_dict['index.html'], self.template_context)
         fileutils.write_file(os.path.join(self.root_dir, 'index.html'), template.render())
         fileutils.write_file(os.path.join(self.root_dir, 'index.css'), self.template_dict['index.css'])

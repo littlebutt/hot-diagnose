@@ -65,7 +65,3 @@ def generate_classname(full_pathname: str, lineno: int = 0):
         return hashlib.new('sha3_256', full_pathname.encode('UTF-8')).hexdigest()[:16]
     elif os.path.isfile(full_pathname):
         return hashlib.new('sha3_256', f'{full_pathname}:{lineno}'.encode('UTF-8')).hexdigest()[:16]
-
-
-def file_maybe(filename: str, extension: str) -> bool:
-    return filename.endswith(extension)

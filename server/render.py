@@ -1,7 +1,6 @@
 # Copied from https://github.com/nedbat/coveragepy/
 import re
-from typing import Dict, Any
-
+from typing import Dict, Any, Sequence, Mapping
 
 __all__ = ['Template']
 
@@ -284,7 +283,10 @@ class Template:
             try:
                 value = getattr(value, dot)
             except AttributeError:
-                value = value[dot]
+                if isinstance(value, Sequence):
+                    value = value[int(dot)]
+                elif isinstance(value, Mapping):
+                    value = value[str(dot)]
             if callable(value):
                 value = value()
         return value

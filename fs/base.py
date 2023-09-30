@@ -37,12 +37,7 @@ class FS:
         self.logger = logger
 
         self.root = None
-        self._is_single_file = True
         self.build()
-
-    @property
-    def is_single_file(self):
-        return self._is_single_file
 
     # Copied from https://github.com/nedbat/coveragepy
     def _translate(self, pattern: str, case_sensitive=True):
@@ -137,7 +132,7 @@ class FS:
             f.extension, f.lines = self._inspect_file(self.path)
             self.root = f
             return f
-        self._is_single_file = False
+
         self.root = Directory(dirname=self.path, basename=os.path.basename(self.path), files_or_directories=[])
         # The stack for memoizing Directory node. When a directory is found and its children nodes (sub-directory or
         # sub-file) are not scaned yet, it will be cached into the stack temporarily. Commonly, the nodes in the stack
@@ -188,6 +183,7 @@ class FS:
                 hook(_d)
                 yield _d
             elif isinstance(_d, Directory):
+                hook(_d)
                 self.logger.info(f"FS.walk: Walking the directory {_d}")
                 for _e in _d.files_or_directories:
                     if isinstance(_e, File):

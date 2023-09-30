@@ -58,8 +58,8 @@ class File:
         return ''.join([line.content for line in self.lines])
 
     def __hash__(self):
-        hash(self.filename)
-        return hash(self.filename)
+        # XXX: Hack to the megic method __hash__ and make it returns a string rather than an int.
+        return fileutils.generate_classname(self.filename)
 
 
 @dataclass
@@ -75,7 +75,5 @@ class Directory:
         return self.__repr__()
 
     def __hash__(self):
-        base = hash(self.dirname)
-        for target in self.files_or_directories:
-            base += hash(target)
-        return base
+        # XXX: Hack to the megic method __hash__ and make it returns a string rather than an int.
+        return fileutils.generate_classname(self.dirname)

@@ -17,24 +17,68 @@
             <br>
             <button id="control"></button>
             {% if Directories %}
-                {% for d in Directories%}
-                <div class="{{d.__hash__}}">
-                    <p class="font-sans text-lg text-gray-800 text-center">{{d.basename}}</p>
+            <div class="main_dir">
+                    <p class="font-sans text-lg text-gray-800 text-center">{{Directories.0.basename}}</p>
                     <table class="table-auto">
                         <tbody>
-                        {% for content in d.files_or_directories %}
-<!--                        {# TODO: FIX HERE make them linkable! #}-->
+                        {% for content in Directories.0.files_or_directories %}
                             <tr>
-                                <td class="border px-4 py-2">{{content.basename}}</td>
-                                <td class="border px-4 py-2">Adam</td>
-                                <td class="border px-4 py-2">858</td>
+                                <td class="border px-4 py-2" onclick="show('{{content.__hash__}}')">{{content.basename}}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
-
+                </div>
+                {% for d in Directories%}
+                <div class="{{d.__hash__}} invisible">
+                    <button onclick="back()">BACK</button>
+                    <p class="font-sans text-lg text-gray-800 text-center">{{d.basename}}</p>
+                    <table class="table-auto">
+                        <tbody>
+                        {% for content in d.files_or_directories %}
+                            <tr>
+                                <td class="border px-4 py-2" onclick="show('{{content.__hash__}}')">{{content.basename}}</td>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
                 {% endfor %}
+                {% for f in Files %}
+                     <div class="{{f.__hash__}} invisible">
+                         <button onclick="back()">BACK</button>
+                         <p class="font-sans text-lg text-gray-800 text-center">{{f.basename}}</p>
+                         <code>
+                         {% for l in f.lines %}
+                         <div class="{{l.__hash__}}" style="background-color: rgb(255, 255, 255)">{{l.lineno}}:{{l.content|escape}}</div>
+                         {% endfor %}
+                         </code>
+                    </div>
+                {% endfor %}
+            <script type="application/javascript">
+
+                window.showing = "main_dir"
+                window.lastshowing = ["main_dir"]
+
+                let show = (classname) => {
+                    window.lastshowing.push(window.showing)
+                    let lastEl = document.getElementsByClassName(window.showing)[0]
+                    lastEl.classList.add("invisible")
+
+                    window.showing = classname
+                    let currEl = document.getElementsByClassName(window.showing)[0]
+                    currEl.classList.remove("invisible")
+                }
+
+                let back = () => {
+                    let lastEl = document.getElementsByClassName(window.showing)[0]
+                    lastEl.classList.add("invisible")
+
+                    let currshowing = window.lastshowing.pop()
+                    window.showing = currshowing
+                    let currEl = document.getElementsByClassName(currshowing)[0]
+                    currEl.classList.remove("invisible")
+                }
+            </script>
             {% else %}
                 {% for f in Files %}
                     <div class="{{f.__hash__}}">
