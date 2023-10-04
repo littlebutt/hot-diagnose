@@ -19,23 +19,35 @@ class Controller {
         let target = document.getElementsByClassName(classname)[0]
         let bgc = target.style.backgroundColor
         let rgb = bgc.replace(/^rgba?\(|\s+|\)$/g,'').split(',');
-        window.scrollTo(0, target.offsetTop - 500)
+        window.scrollTo(0, target.offsetTop - 200)
         gsap.to(target, {scale: 2})
         gsap.to(target, {scale: 1, backgroundColor: `rgb(255, ${rgb[1] - 10}, ${rgb[2] - 10})`})
     }
 
+    _enable_stop_button() {
+        let stop = document.querySelector('#stop')
+        stop.removeAttribute('disabled')
+    }
+
     do_start() {
+        this._enable_stop_button()
         const render = () => {
             let data = this.peak()
-            console.log(data)
             window.ctrl._blink_line(data.classname)
         }
         this.send('start')
         this.timmer = setInterval(render, 500)
     }
 
-    do_stop() {
+    do_pause() {
         clearInterval(this.timmer)
+    }
+
+    do_stop() {
+        clearInterval(window.ctrl.timmer)
+        window.ctrl.send('stop')
+        document.querySelector('#control').disabled = true
+        document.querySelector('#stop').disabled = true
     }
 }
 
@@ -45,11 +57,13 @@ window.onload = () => {
     control.innerHTML = 'START'
     control.onclick = () => {
         if (control.innerHTML === 'START') {
-            control.innerHTML = 'STOP'
+            control.innerHTML = 'PAUSE'
             window.ctrl.do_start()
         } else {
             control.innerHTML = 'START'
-            window.ctrl.do_stop()
+            window.ctrl.do_pause()
         }
     }
+    let stop = document.querySelector('#stop')
+    stop.addEventListener('click', window.ctrl.do_stop)
 }
