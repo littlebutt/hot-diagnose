@@ -42,7 +42,7 @@ class Tracer:
                          f"lineno: {frame.f_lineno}, cb_rt: {json.dumps(cb_rt)}")
         Q.put(TraceMessageEntry(0,
                                 self._mangle_path(frame.f_code.co_filename),
-                                frame.f_lineno, self.line_hash(frame),cb_rt))
+                                frame.f_lineno, self.line_hash(frame), self.file_hash(frame), cb_rt))
         return self._trace_func
 
     def start(self):
@@ -60,3 +60,6 @@ class Tracer:
 
     def line_hash(self, frame: T_frame):
         return fileutils.generate_classname(os.path.abspath(frame.f_code.co_filename), int(frame.f_lineno))
+
+    def file_hash(self, frame: T_frame):
+        return fileutils.generate_classname(os.path.abspath(frame.f_code.co_filename))

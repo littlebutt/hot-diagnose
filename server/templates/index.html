@@ -31,6 +31,9 @@
             <br>
 
             {% if Directories %}
+            <script type="application/javascript">
+                window.is_directory = true
+            </script>
             <div class="main_dir px-8">
                 <div class="font-sans text-lg text-gray-800 inline">{{Directories.0.basename}}</div>
                 <br>

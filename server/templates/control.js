@@ -15,8 +15,16 @@ class Controller {
         return this.queue.shift()
     }
 
-    _blink_line(classname) {
+    _blink_line(classname, parent) {
         let target = document.getElementsByClassName(classname)[0]
+        if (window.is_directory) {
+            let showing = document.getElementsByClassName(window.showing)[0]
+            showing.classList.add('invisible')
+            let file_node = document.getElementsByClassName(parent)[0]
+            file_node.classList.remove('invisible')
+            window.showing = parent
+        }
+
         let bgc = target.style.backgroundColor
         let rgb = bgc.replace(/^rgba?\(|\s+|\)$/g,'').split(',');
         window.scrollTo(0, target.offsetTop - 200)
@@ -33,7 +41,10 @@ class Controller {
         this._enable_stop_button()
         const render = () => {
             let data = this.peak()
-            window.ctrl._blink_line(data.classname)
+            if (typeof(data) === "undefined") {
+                window.ctrl.do_stop()
+            }
+            window.ctrl._blink_line(data.classname, data.file_classname)
         }
         this.send('start')
         this.timmer = setInterval(render, 500)
