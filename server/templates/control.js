@@ -5,6 +5,7 @@ class Controller {
         this.ws.onmessage = function (message) {
             window.ctrl.queue.push(JSON.parse(message.data))
         }
+        this.delay = 500
     }
 
     send(message) {
@@ -47,7 +48,7 @@ class Controller {
             window.ctrl._blink_line(data.classname, data.file_classname)
         }
         this.send('start')
-        this.timmer = setInterval(render, 500)
+        this.timmer = setInterval(render, this.delay)
     }
 
     do_pause() {
@@ -59,6 +60,20 @@ class Controller {
         window.ctrl.send('stop')
         document.querySelector('#control').disabled = true
         document.querySelector('#stop').disabled = true
+        document.querySelector('#speed_up').disabled = true
+        document.querySelector('#speed_down').disabled = true
+    }
+
+    speed_up() {
+        this.delay /= 2
+        this.do_pause()
+        this.do_start()
+    }
+
+    speed_down() {
+        this.delay *= 2
+        this.do_pause()
+        this.do_start()
     }
 }
 

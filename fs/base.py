@@ -113,7 +113,8 @@ class FS:
                     Line(lineno=1, content=str(fileutils.read_source(file), encoding='utf-8'), filename=file))
             except UnicodeDecodeError:
                 self.logger.warning(f"Fail to inspect file {file}, which may be a binary file", exc_info=True)
-        return ext, content
+        stat = fileutils.stat(file)
+        return ext, content, stat[0], stat[1]
 
     def build(self):
         """
@@ -129,11 +130,12 @@ class FS:
         """
         if os.path.isfile(self.path):
             f = File(filename=self.path, basename=os.path.basename(self.path))
-            f.extension, f.lines = self._inspect_file(self.path)
+            f.extension, f.lines, f.last_modified, f.size = self._inspect_file(self.path)
             self.root = f
             return f
 
         self.root = Directory(dirname=self.path, basename=os.path.basename(self.path), files_or_directories=[])
+        self.root.last_modified, self.root.size = fileutils.stat(self.path)
         # The stack for memoizing Directory node. When a directory is found and its children nodes (sub-directory or
         # sub-file) are not scaned yet, it will be cached into the stack temporarily. Commonly, the nodes in the stack
         # for one time are in the same layer.
@@ -155,6 +157,7 @@ class FS:
                         self.logger.info(f"FS.build: The directory {_d} is excluded")
                         continue
                     _new_dir = Directory(dirname=_d, basename=_short_d, files_or_directories=[])
+                    _new_dir.last_modified, _new_dir.size = fileutils.stat(_d)
                     _dir.files_or_directories.append(_new_dir)
                     stack.append((_d, _new_dir))
                 elif os.path.isfile(_d):
@@ -166,7 +169,7 @@ class FS:
                         self.logger.info(f"FS.build: The file {_d} is excluded")
                         continue
                     _new_file = File(filename=_d, basename=os.path.basename(_d))
-                    _new_file.extension, _new_file.lines = self._inspect_file(_d)
+                    _new_file.extension, _new_file.lines, _new_file.last_modified, _new_file.size = self._inspect_file(_d)
                     _dir.files_or_directories.append(_new_file)
                 else:
                     self.logger.warning(f"FS.build: Unexpected target {_d}")

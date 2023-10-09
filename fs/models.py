@@ -49,6 +49,8 @@ class File:
     filename: PathLike | str
     basename: str
     extension: str | None = field(default_factory=str)
+    last_modified: str = field(default_factory=str)
+    size: str = field(default_factory=str)
     lines: List['Line'] = field(default_factory=list)
 
     def __repr__(self):
@@ -66,6 +68,8 @@ class File:
 class Directory:
     dirname: PathLike | str
     basename: str
+    last_modified: str = field(default_factory=str)
+    size: str = field(default_factory=str)
     files_or_directories: List[Union['File', 'Directory']] = field(default_factory=list)
 
     def __repr__(self):

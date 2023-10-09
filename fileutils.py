@@ -3,6 +3,7 @@ import ntpath
 import os.path
 import pathlib
 import re
+import time
 from os import PathLike
 from typing import Tuple
 
@@ -65,3 +66,18 @@ def generate_classname(full_pathname: str, lineno: int = 0):
         return hashlib.new('sha3_256', full_pathname.encode('UTF-8')).hexdigest()[:16]
     elif os.path.isfile(full_pathname):
         return hashlib.new('sha3_256', f'{full_pathname}:{lineno}'.encode('UTF-8')).hexdigest()[:16]
+
+
+def stat(path: str) -> Tuple[str, ...]:
+    assert os.path.abspath(path)
+    st = os.stat(path)
+    size_bytes = st.st_size
+    units = ['B', 'KB', 'MB', 'GB']
+    u_index = 0
+    while size_bytes >= 1024:
+        size_bytes /= 1024
+        u_index += 1
+    size = str(size_bytes) + units[u_index]
+    mtime_sec = st.st_mtime
+    mtime = time.strftime("%Y-%m-%d", time.localtime(mtime_sec))
+    return mtime, size
