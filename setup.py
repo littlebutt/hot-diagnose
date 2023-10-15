@@ -24,4 +24,5 @@ if __name__ == '__main__':
           long_description=get_long_descript(),
           url='https://github.com/littlebutt/hot-diagnose',
           python_requires='>=3.10',
-          packages=find_packages())
+          packages=find_packages(),
+          include_package_data=True)
