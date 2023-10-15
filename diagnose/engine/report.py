@@ -60,7 +60,7 @@ class Reporter:
         for _ in self.fs.walk(hook=self._walk_hook):
             pass
 
-        self.template_context.update({'escape': escape, 'len': len, 'is_multiple': is_multiple})
+        self.template_context.update({'escape': escape, 'len': len, 'is_file': is_file})
 
         template = Template(self.template_dict['index.html'], self.template_context)
         fileutils.write_file(os.path.join(self.root_dir, 'index.html'), template.render())
@@ -76,5 +76,5 @@ def escape(line: str):
     return line.replace("&", "&amp;").replace(" ", "&nbsp;").replace("<", "&lt;")
 
 
-def is_multiple(contents: List[Any]):
-    return len(contents) > 1
+def is_file(content: File | Directory):
+    return isinstance(content, File)

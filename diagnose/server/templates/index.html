@@ -56,7 +56,13 @@
                     {% for content in Directories.0.files_or_directories %}
                     <tr class="hover:bg-red-50">
                         <td class="px-4 py-2">
-                            <a href="#" onclick="show('{{content.__hash__}}')">&#128462;&nbsp;{{content.basename}}</a>
+                            <a href="#" onclick="show('{{content.__hash__}}')">
+                                {% if content|is_file %}
+                                &#128462;&nbsp;
+                                {% else %}
+                                &#128448;&nbsp;
+                                {% endif %}
+                                {{content.basename}}</a>
                         </td>
                         <td class="px-4 py-2">{{content.size}}</td>
                         <td class="px-4 py-2">{{content.last_modified}}</td>
@@ -90,7 +96,13 @@
                     {% for content in d.files_or_directories %}
                         <tr class="hover:bg-red-50">
                             <td class="px-4 py-2">
-                                <a href="#" onclick="show('{{content.__hash__}}')">&#128462;&#128448;&nbsp;{{content.basename}}</a>
+                                <a href="#" onclick="show('{{content.__hash__}}')">
+                                {% if content|is_file %}
+                                &#128462;&nbsp;
+                                {% else %}
+                                &#128448;&nbsp;
+                                {% endif %}
+                                {{content.basename}}</a>
                             </td>
                             <td class="px-4 py-2">{{content.size}}</td>
                             <td class="px-4 py-2">{{content.last_modified}}</td>
